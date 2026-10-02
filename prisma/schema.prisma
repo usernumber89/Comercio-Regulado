@@ -1,0 +1,240 @@
+// ===========================================================================
+// ESQUEMA DE LA BASE DE DATOS
+// ---------------------------------------------------------------------------
+// Este archivo es la única descripción de cómo se guardan los datos. Prisma lo
+// lee para generar el cliente que usa `lib/db.ts` y para crear las
+// migraciones de `prisma/migrations/`.
+//
+// Después de tocarlo:
+//   npx prisma migrate dev --name algo-nuevo   (desarrollo)
+//   npx prisma migrate deploy                  (producción)
+//
+// Para cualquiera que abra el proyecto por primera vez:
+//   1. crear el proyecto en neon.tech y pegar las dos URL en `.env`
+//   2. npm install
+//   3. npx prisma migrate deploy   (crea las tablas)
+//   4. npm run dev
+// ===========================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../prisma/generated"
+  // CommonJS y no módulos ES: es lo que espera el resto del proyecto, que
+  // Next.js compila como CommonJS, y lo que necesita el script de la semilla
+  // y el de CSV cuando corren con `tsx`.
+  moduleFormat = "cjs"
+  // El cliente se escribe como TypeScript y lo compila Next.js con el resto
+  // del proyecto. La extensión `.ts` en los imports internos es lo que
+  // permite que `tsx` los resuelva también.
+  importFileExtension = "ts"
+}
+
+// La URL no se escribe aquí: está en `prisma.config.ts`, que la lee de `.env`.
+// Así el mismo esquema sirve para desarrollo y para producción sin editarlo.
+datasource db {
+  provider = "postgresql"
+}
+
+// ===========================================================================
+// Catálogos cerrados
+// ---------------------------------------------------------------------------
+// Son las listas de `types/index.ts` y de `data/tiendas.ts`, llevadas a la base
+// como enumeraciones de PostgreSQL. A partir de aquí la base rechaza un rubro,
+// un tipo de incidente o un estado que la aplicación no sepa manejar, en vez
+// de guardar texto suelto.
+// ===========================================================================
+
+enum Categoria {
+  abarrotes
+  panaderia
+  carniceria
+  fruteria
+  lacteos
+  ferreteria
+  farmacia
+  salon
+  otro
+}
+
+enum TipoIncidente {
+  ruido
+  basura
+  estacionamiento
+  seguridad
+  otro
+}
+
+enum Estado {
+  activo
+  resuelto
+}
+
+enum TipoSeguimientoReporte {
+  accion
+  ronda
+  evidencia
+  resolucion
+  reapertura
+}
+
+// ===========================================================================
+// Tiendas
+// ---------------------------------------------------------------------------
+// Los nombres van en camelCase porque es la convención de Prisma, no porque se
+// quiera mostrar la tabla en un visor: para eso está `npm run exportar`, que
+// deja los CSV con los encabezados en español.
+//
+// Los horarios y las listas de productos van como `Json` y no como catorce
+// columnas: son un bloque que siempre se lee entero, y así la tabla no crece
+// a N columnas de horarios más N de productos.
+//
+// `base` se conserva para compatibilidad con las filas del catálogo anterior.
+// ===========================================================================
+
+model Tienda {
+  id        String    @id
+  nombre    String
+  dueno     String
+  rol       String    @default("Comerciante autorizado")
+  /// Iniciales del avatar. Dos letras.
+  iniciales String    @default("??")
+  categoria Categoria
+
+  /// Identificador corto y único que se muestra en la ficha y en el local, como
+  /// una licencia: `EPS-0001`. Lo asigna la secuencia `codigo_tienda_seq` y
+  /// sirve para que alguien se refiera a la tienda sin ambigüedad.
+  codigo String @unique
+
+  // Dónde está la tienda, dentro de la residencial.
+  pasaje     String @default("")
+  casa       String @default("")
+  referencia String @default("")
+  /// Coordenadas aproximadas en el plano de la residencial, no un GPS de
+  /// dirección. Opcionales.
+  lat        Float?
+  lng        Float?
+
+  /// Franja horaria autorizada, ya resumida para pantalla.
+  horarioAutorizado String @default("")
+  /// Fecha legible: "12 de marzo de 2026".
+  autorizadoDesde   String @default("")
+  /// Un objeto con una entrada por día: `{ "lun": { "activo": true, ... } }`.
+  horarioSemanal    Json   @default("{}")
+
+  productosPermitidos   Json @default("[]")
+  productosRestringidos Json @default("[]")
+
+  // Métricas económicas reportadas por el comercio, en USD.
+  ahorroMensual          Float @default(0)
+  residentesBeneficiados Int   @default(0)
+  ingresoCuota           Float @default(0)
+  minutosTrayecto        Int   @default(0)
+  viajesSemanales        Int   @default(0)
+
+  /// Frase corta de contexto, visible en la ficha.
+  nota String @default("")
+
+  /// Marca heredada para identificar los registros del catálogo de demostración.
+  base     Boolean  @default(false)
+  creadaEn DateTime @default(now())
+
+  reportes Reporte[]
+  resenas  Resena[]
+}
+
+// ===========================================================================
+// Reportes
+// ---------------------------------------------------------------------------
+// Denuncias de los residentes, con folio. El folio lo pone la base, no el
+// cliente: ver el comentario de `folio` abajo.
+// ===========================================================================
+
+model Reporte {
+  /// Clave primaria opaca, la que usa la API. Nunca se muestra: a la gente se
+  /// le enseña el folio, que es el número de arriba.
+  id String @id @default(cuid())
+
+  /// Número de folio, único e irrepetible.
+  ///
+  /// Lo genera una secuencia de PostgreSQL (`autoincrement`), que es lo que
+  /// garantiza que dos personas que reporten en el mismo segundo no puedan
+  /// sacar el mismo número. En SQLite esto se hacía con
+  /// `MAX(folio) + 1` dentro de una transacción, algo que sobre la red se
+  /// puede repetir. Aquí la secuencia resuelve el problema por nosotros.
+  ///
+  /// La semilla de `data/tiendas.ts` inserta folios a mano (2401...) y luego
+  /// mueve la secuencia con `setval`, para que el siguiente siga la cuenta.
+  folio Int @unique @default(autoincrement())
+
+  tiendaId    String
+  tipo        TipoIncidente
+  /// Texto libre que escribe quien denuncia.
+  descripcion String
+  anonimo     Boolean       @default(false)
+  estado      Estado        @default(activo)
+  creadoEn    DateTime      @default(now())
+  accionCorrectiva String?
+  responsable      String?
+  fechaLimite      DateTime?
+  /// Marca heredada para identificar los reportes de demostración.
+  base        Boolean       @default(false)
+
+  /// Al borrar una tienda se van sus reportes con ella.
+  tienda Tienda @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+  seguimientos SeguimientoReporte[]
+
+  @@index([tiendaId])
+  @@index([creadoEn])
+}
+
+model SeguimientoReporte {
+  id          String                 @id @default(cuid())
+  reporteId   String
+  tipo        TipoSeguimientoReporte
+  detalle     String
+  responsable String?
+  evidenciaUrl String?
+  creadoEn    DateTime               @default(now())
+
+  reporte Reporte @relation(fields: [reporteId], references: [id], onDelete: Cascade)
+
+  @@index([reporteId, creadoEn])
+}
+
+// ===========================================================================
+// Reseñas
+// ---------------------------------------------------------------------------
+// Opinión pública de quien estuvo en la tienda: de una a cinco estrellas, con
+// un comentario.
+//
+// La regla de negocio que las hace valiosas: una reseña de una sola estrella es
+// una denuncia y se trata como tal, así que además se escribe un `Reporte` con
+// folio y la cuenta al puntaje de cumplimiento. De dos a cinco son opinión y no
+// mueven nada. La razón está en `lib/cumplimiento.ts`.
+// ===========================================================================
+
+model Resena {
+  /// Clave primaria opaca, igual que en `Reporte`. La API la usa, la gente ve
+  /// el folio del reporte o las estrellas.
+  id String @id @default(cuid())
+
+  tiendaId String
+  /// De 1 a 5. En la base es un entero sin restringir: lo limita
+  /// `leerResena()`, en `lib/api.ts`, que es el único que decide qué se guarda.
+  estrellas   Int
+  /// Texto libre. Puede ir vacío cuando la opinión es buena: lo único que
+  /// obliga a escribir es la reseña de una estrella, que es una denuncia.
+  comentario String @default("")
+  /// Nombre de quien escribe, cuando no es anónimo. Vacío si es anónimo.
+  autor       String    @default("")
+  anonimo     Boolean   @default(true)
+  /// `true` si esta reseña generó un reporte: solo puede ser una de una estrella.
+  denuncia    Boolean   @default(false)
+  creadoEn    DateTime  @default(now())
+
+  /// Al borrar una tienda se van sus reseñas con ella.
+  tienda Tienda @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+
+  @@index([tiendaId])
+  @@index([creadoEn])
+}

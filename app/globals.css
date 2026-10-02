@@ -1,26 +1,206 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --papel: #ffffff;
+  --superficie: #ffffff;
+  --hundido: #f3f7f9;
+
+  --tinta: #15253f;
+  --tinta-suave: #526276;
+  --tinta-tenue: #68788a;
+
+  --borde: #dce5eb;
+  --borde-fuerte: #c4d2dc;
+
+  --bosque: #15253f;
+  --bosque-fuerte: #0e1b31;
+  --bosque-lavado: #edf2f7;
+  --bosque-tinta: #15253f;
+
+  --mostaza: #0097b2;
+  --mostaza-lavado: #e5f5f8;
+  --mostaza-tinta: #00788e;
+  --acento: var(--mostaza);
+
+  --terracota: #b3492e;
+  --terracota-lavado: #f6e2da;
+  --terracota-tinta: #9c3d24;
+
+  --verde: #307748;
+  --verde-lavado: #e5f2e9;
+  --verde-tinta: #28623b;
+
+  --semaforo-verde: #15803d;
+  --semaforo-verde-fondo: #dcfce7;
+  --semaforo-amarillo: #a16207;
+  --semaforo-amarillo-fondo: #fef3c7;
+  --semaforo-rojo: #b91c1c;
+  --semaforo-rojo-fondo: #fee2e2;
+
+  --sombra-tenue: 0 1px 2px rgb(21 37 63 / 0.04),
+    0 4px 12px -8px rgb(21 37 63 / 0.12);
+  --sombra-media: 0 2px 4px rgb(21 37 63 / 0.05),
+    0 12px 24px -16px rgb(21 37 63 / 0.18);
+  --sombra-marcada: 0 4px 8px rgb(21 37 63 / 0.06),
+    0 24px 40px -22px rgb(21 37 63 / 0.22);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --papel: #101a2a;
+  --superficie: #152238;
+  --hundido: #0b1422;
+
+  --tinta: #f4f7fa;
+  --tinta-suave: #c0ccd8;
+  --tinta-tenue: #9cabb9;
+
+  --borde: #2d3d52;
+  --borde-fuerte: #43566e;
+
+  --bosque: #0097b2;
+  --bosque-fuerte: #25b0c9;
+  --bosque-lavado: #17384a;
+  --bosque-tinta: #62c4d5;
+
+  --mostaza: #25b0c9;
+  --mostaza-lavado: #17384a;
+  --mostaza-tinta: #62c4d5;
+  --acento: var(--mostaza);
+
+  --terracota: #de8564;
+  --terracota-lavado: #2d1a13;
+  --terracota-tinta: #de8564;
+
+  --verde: #6faf84;
+  --verde-lavado: #16281b;
+  --verde-tinta: #6faf84;
+
+  --semaforo-verde: #4ade80;
+  --semaforo-verde-fondo: #14291b;
+  --semaforo-amarillo: #facc15;
+  --semaforo-amarillo-fondo: #30270b;
+  --semaforo-rojo: #f87171;
+  --semaforo-rojo-fondo: #321717;
+
+  --sombra-tenue: 0 1px 2px rgb(0 0 0 / 0.28),
+    0 4px 12px -8px rgb(0 0 0 / 0.4);
+  --sombra-media: 0 2px 4px rgb(0 0 0 / 0.3),
+    0 12px 24px -16px rgb(0 0 0 / 0.5);
+  --sombra-marcada: 0 4px 8px rgb(0 0 0 / 0.35),
+    0 24px 40px -22px rgb(0 0 0 / 0.6);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-papel: var(--papel);
+  --color-superficie: var(--superficie);
+  --color-hundido: var(--hundido);
+
+  --color-tinta: var(--tinta);
+  --color-tinta-suave: var(--tinta-suave);
+  --color-tinta-tenue: var(--tinta-tenue);
+
+  --color-borde: var(--borde);
+  --color-borde-fuerte: var(--borde-fuerte);
+
+  --color-bosque: var(--bosque);
+  --color-bosque-fuerte: var(--bosque-fuerte);
+  --color-bosque-lavado: var(--bosque-lavado);
+  --color-bosque-tinta: var(--bosque-tinta);
+
+  --color-mostaza: var(--mostaza);
+  --color-mostaza-lavado: var(--mostaza-lavado);
+  --color-mostaza-tinta: var(--mostaza-tinta);
+
+  --color-terracota: var(--terracota);
+  --color-terracota-lavado: var(--terracota-lavado);
+  --color-terracota-tinta: var(--terracota-tinta);
+
+  --color-verde: var(--verde);
+  --color-verde-lavado: var(--verde-lavado);
+  --color-verde-tinta: var(--verde-tinta);
+
+  --font-sans: var(--font-plex-sans);
+  --font-serif: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 8px;
+
+  --shadow-tenue: var(--sombra-tenue);
+  --shadow-media: var(--sombra-media);
+  --shadow-marcada: var(--sombra-marcada);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--borde);
+    scrollbar-width: thin;
+    scrollbar-color: var(--borde-fuerte) transparent;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--papel);
+    color: var(--tinta);
+    font-family: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "cv05", "ss01";
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--mostaza);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  ::selection {
+    background-color: var(--mostaza-lavado);
+    color: var(--tinta);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .filete-bosque {
+    box-shadow: inset 3px 0 0 0 var(--bosque);
+  }
+
+  .filete-mostaza {
+    box-shadow: inset 3px 0 0 0 var(--mostaza);
+  }
+
+  .filete-terracota {
+    box-shadow: inset 3px 0 0 0 var(--terracota);
+  }
+
+  .filete-verde {
+    box-shadow: inset 3px 0 0 0 var(--verde);
+  }
+
+  .borde-papel {
+    border: 1px solid var(--borde);
+    border-radius: var(--radius-lg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

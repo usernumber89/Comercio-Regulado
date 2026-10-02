@@ -32,10 +32,23 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...menos la plantilla, que sí es código y va versionada.
+!.env.example
 
 # vercel
 .vercel
 
+# cliente de Prisma
+# Es código generado: lo reconstruye `npm install` con el `postinstall`.
+/prisma/generated
+
+# salidas de `npm run exportar`
+# Los CSV son datos, no código. `datos/.gitkeep` sí se versiona para que la
+# carpeta exista en el repositorio.
+/datos/*
+!/datos/.gitkeep
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+

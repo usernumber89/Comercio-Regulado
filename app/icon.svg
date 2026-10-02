@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Comercio Regulado">
+  <rect width="32" height="32" rx="8" fill="#f4f0e3"/>
+  <rect x="2.5" y="2.5" width="27" height="27" rx="6.5" fill="none" stroke="#234b3b" stroke-width="1.6"/>
+  <path d="M9.5 21.5v-8l6.5 5.2 6.5-5.2v8" fill="none" stroke="#b8860b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
