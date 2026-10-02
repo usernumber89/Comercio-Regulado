@@ -56,7 +56,7 @@ export const PASOS = [
     numero: "04",
     titulo: "Cuantificar el beneficio",
     detalle:
-      "Reúne información de actividad y beneficio para apoyar decisiones administrativas con datos.",
+      "Reúne información de actividad y beneficio para apoyar las decisiones administrativas con datos.",
   },
 ] as const;
 
