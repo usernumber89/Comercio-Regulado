@@ -27,8 +27,7 @@ export type TabId =
   | "perfil"
   | "quejas"
   | "cumplimiento"
-  | "beneficio"
-  | "tiendas";
+  | "beneficio";
 
 /**
  * Rubros admitidos dentro de la residencial.

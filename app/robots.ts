@@ -5,9 +5,8 @@ import { SITIO_URL } from "@/data/sitio";
 /**
  * robots.txt
  *
- * El tablero es una herramienta interna, así que se pide que los buscadores no
- * lo indexen. El directorio y las fichas públicas sí se dejan: son la parte
- * que debe poder encontrarse por búsqueda o compartirse.
+ * Las rutas de gestión no deben indexarse. El directorio y las fichas públicas
+ * sí se dejan: son la parte que debe poder encontrarse por búsqueda o compartirse.
  */
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -15,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: ["/", "/tiendas/"],
-        disallow: ["/dashboard", "/dashboard/quejas"],
+        disallow: ["/dashboard", "/configuracion"],
       },
     ],
     sitemap: `${SITIO_URL}/sitemap.xml`,

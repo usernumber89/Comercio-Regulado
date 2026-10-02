@@ -1,18 +1,18 @@
 "use client";
 
-import { AlertTriangleIcon, RotateCcwIcon, StoreIcon } from "lucide-react";
+import { useEffect } from "react";
+import Link from "next/link";
+import { AlertTriangleIcon, RotateCcwIcon } from "lucide-react";
 import { MotionConfig } from "framer-motion";
 
 import { PestanaBeneficio } from "@/components/dashboard/pestana-beneficio";
 import { PestanaCumplimiento } from "@/components/dashboard/pestana-cumplimiento";
 import { PestanaPerfil } from "@/components/dashboard/pestana-perfil";
 import { PestanaQuejas } from "@/components/dashboard/pestana-quejas";
-import { PestanaTiendas } from "@/components/dashboard/pestana-tiendas";
 import { ContenedorPestana, PestanasLista } from "@/components/dashboard/pestanas";
-import { SelectorTienda } from "@/components/dashboard/selector-tienda";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { seleccionarCargando, seleccionarError, usePanel, useTiendaActual } from "@/store/use-panel";
+import { seleccionarCargando, seleccionarError, usePanel } from "@/store/use-panel";
 
 /**
  * Tablero de fichas.
@@ -25,16 +25,28 @@ import { seleccionarCargando, seleccionarError, usePanel, useTiendaActual } from
  * El contenido sale de la base de datos: `CargaDatos` la pide al montar y
  * este componente solo muestra lo que ya llegó.
  */
-export function Tablero() {
+export function Tablero({
+  tiendaId,
+  administrador,
+}: {
+  tiendaId: string;
+  administrador: boolean;
+}) {
   const tab = usePanel((estado) => estado.tab);
   const setTab = usePanel((estado) => estado.setTab);
+  const setTienda = usePanel((estado) => estado.setTienda);
   const cargando = usePanel(seleccionarCargando);
   const error = usePanel(seleccionarError);
   const cargarEstado = usePanel((estado) => estado.cargarEstado);
 
-  // Resuelto contra el catálogo completo, así una tienda dada de alta desde
-  // el formulario se abre con los datos cargados.
-  const tienda = useTiendaActual();
+  const tienda = usePanel(
+    (estado) => estado.tiendas.find((actual) => actual.id === tiendaId) ?? null,
+  );
+
+  useEffect(() => {
+    setTienda(tiendaId);
+    setTab("perfil");
+  }, [setTab, setTienda, tiendaId]);
 
   if (error) {
     return (
@@ -51,23 +63,9 @@ export function Tablero() {
   if (!tienda) {
     return (
       <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-        <section className="max-w-2xl rounded-lg border border-[var(--borde)] bg-[var(--superficie)] p-6 shadow-[var(--sombra-tenue)] sm:p-8">
-          <span className="grid size-11 place-items-center rounded-md bg-[var(--bosque-lavado)] text-[var(--bosque-tinta)]">
-            <StoreIcon aria-hidden />
-          </span>
-          <p className="mt-6 text-sm font-semibold text-[var(--mostaza-tinta)]">
-            Configuración inicial
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold text-[var(--tinta)] sm:text-3xl">
-            Registra tu primer comercio
-          </h1>
-          <p className="mt-3 max-w-prose text-sm leading-6 text-[var(--tinta-suave)]">
-            Completa su ficha para administrar horarios, incidencias y cumplimiento desde este panel.
-          </p>
-        </section>
-        <div className="mt-8 max-w-5xl">
-          <PestanaTiendas inicialAbierto />
-        </div>
+        <p className="text-sm text-[var(--tinta-suave)]">
+          No se encontró este comercio. <Link href="/tiendas" className="font-medium text-[var(--bosque-tinta)] underline underline-offset-2">Volver a comercios</Link>
+        </p>
       </div>
     );
   }
@@ -75,22 +73,24 @@ export function Tablero() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <Link
+          href="/tiendas"
+          className="text-xs font-medium text-[var(--tinta-tenue)] hover:text-[var(--tinta)]"
+        >
+          ← Todos los comercios
+        </Link>
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-serif text-2xl font-semibold text-[var(--tinta)] sm:text-3xl">
-              Tablero de fichas
-            </h1>
-            <p className="mt-1.5 text-sm text-[var(--tinta-suave)]">
-              Cambiar de tienda actualiza todas las pestañas a la vez.
+            <p className="font-mono text-xs text-[var(--tinta-tenue)]">
+              {tienda.codigo} · {tienda.ubicacion.pasaje}, {tienda.ubicacion.casa}
             </p>
+            <h1 className="mt-1 font-serif text-2xl font-semibold text-[var(--tinta)] sm:text-3xl">
+              {tienda.nombre}
+            </h1>
           </div>
           <p className="font-mono text-xs text-[var(--tinta-tenue)]">
-            {tienda.horarioAutorizado} · {tienda.ubicacion.pasaje}
+            {tienda.horarioAutorizado}
           </p>
-        </div>
-
-        <div className="mt-6">
-          <SelectorTienda />
         </div>
 
         <Tabs
@@ -102,13 +102,13 @@ export function Tablero() {
 
           <TabsContent value="perfil">
             <ContenedorPestana key="perfil">
-              <PestanaPerfil tienda={tienda} />
+              <PestanaPerfil tienda={tienda} editable={administrador} />
             </ContenedorPestana>
           </TabsContent>
 
           <TabsContent value="quejas">
             <ContenedorPestana key="quejas">
-              <PestanaQuejas tiendaId={tienda.id} />
+              <PestanaQuejas tiendaId={tienda.id} administrador={administrador} />
             </ContenedorPestana>
           </TabsContent>
 
@@ -124,11 +124,6 @@ export function Tablero() {
             </ContenedorPestana>
           </TabsContent>
 
-          <TabsContent value="tiendas">
-            <ContenedorPestana key="tiendas">
-              <PestanaTiendas />
-            </ContenedorPestana>
-          </TabsContent>
         </Tabs>
       </div>
     </MotionConfig>

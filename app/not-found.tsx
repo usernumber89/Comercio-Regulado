@@ -27,7 +27,7 @@ export default function NoEncontrado() {
 
           <div className="mt-7 flex flex-wrap gap-3">
             <Button asChild>
-              <Link href="/dashboard">Ir al tablero</Link>
+              <Link href="/tiendas">Ver comercios</Link>
             </Button>
             <Button asChild variant="contorno">
               <Link href="/">Volver al inicio</Link>

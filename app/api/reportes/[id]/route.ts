@@ -1,4 +1,5 @@
 import { error } from "@/lib/api";
+import { tieneSesionAdmin } from "@/lib/autenticacion-admin";
 import { alternarEstadoReporte } from "@/lib/repositorio";
 
 /**
@@ -11,6 +12,10 @@ export async function PATCH(
   _request: Request,
   context: RouteContext<"/api/reportes/[id]">,
 ) {
+  if (!(await tieneSesionAdmin())) {
+    return error("Inicia sesión para resolver o reabrir reportes.", 401);
+  }
+
   const { id } = await context.params;
 
   const reporte = await alternarEstadoReporte(id);

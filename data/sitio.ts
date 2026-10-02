@@ -28,8 +28,8 @@ export const HERO = {
   titular: "Gestión clara para cada comercio autorizado.",
   bajada:
     "Administra autorizaciones, horarios, incidencias y cumplimiento en un solo espacio. Mantén la información organizada, trazable y disponible para la comunidad.",
-  ctaPrimario: "Abrir el panel",
-  ctaSecundario: "Ver directorio",
+  ctaPrimario: "Seleccionar comercio",
+  ctaSecundario: "Configurar comercios",
 };
 
 /** Pasos del proceso, mostrados como lista numerada y no como tarjetas. */
@@ -95,9 +95,9 @@ export const PIE = {
     {
       titulo: "Sistema",
       enlaces: [
-        { texto: "Tablero de fichas", href: "/dashboard" },
+        { texto: "Comercios", href: "/tiendas" },
         { texto: "Reportar un incidente", href: "/dashboard/quejas" },
-        { texto: "Directorio de comercios", href: "/tiendas" },
+        { texto: "Configuración", href: "/configuracion" },
       ],
     },
     {

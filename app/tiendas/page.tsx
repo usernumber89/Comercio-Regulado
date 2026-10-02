@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Comercios",
-    description: `Todos los comercios autorizados de ${METADATOS.titulo}, con su código, su horario y las reseñas de los vecinos.`,
+    description: `Selecciona un comercio de ${METADATOS.titulo} para gestionar su perfil, quejas, cumplimiento y beneficios.`,
     alternates: { canonical: "/tiendas" },
   };
 }
@@ -27,15 +27,15 @@ export default async function PaginaTiendas() {
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
         <header className="filete-bosque border-t-2 border-t-[var(--bosque)] pt-5">
           <p className="font-mono text-xs text-[var(--tinta-tenue)]">
-            Comercio Regulado · Directorio
+            Comercio Regulado · Comercios
           </p>
           <h1 className="mt-2 font-serif text-3xl font-semibold text-balance text-[var(--tinta)] sm:text-4xl">
-            Comercios autorizados
+            Selecciona un comercio
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--tinta-suave)] sm:text-base">
-            Cada comercio tiene su propia ficha pública con su código, su
-            horario y lo que la comunidad ha opinado de él. Buscalos por nombre,
-            por rubro o por el código que aparece en el local.
+            Abre la gestión individual para revisar perfil, quejas, cumplimiento
+            y beneficios. La ficha pública de cada comercio sigue disponible
+            por separado para residentes y visitantes.
           </p>
           <p className="mt-3 font-mono text-xs text-[var(--tinta-tenue)]">
             {tiendas.length} comercio{tiendas.length === 1 ? "" : "s"} ·{" "}

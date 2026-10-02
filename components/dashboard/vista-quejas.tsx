@@ -92,7 +92,7 @@ export function VistaQuejas({ folio }: { folio: number | null }) {
             El canal de incidencias estará disponible después del primer registro.
           </p>
           <Button asChild className="mt-4">
-            <Link href="/dashboard">Abrir administración</Link>
+            <Link href="/configuracion">Registrar un comercio</Link>
           </Button>
         </div>
       ) : (
@@ -106,7 +106,9 @@ export function VistaQuejas({ folio }: { folio: number | null }) {
 
       <div className="mt-8 flex flex-wrap gap-3 border-t border-[var(--borde)] pt-5">
         <Button asChild variant="contorno" size="sm">
-          <Link href="/dashboard">Volver al tablero</Link>
+          <Link href={tienda ? `/dashboard/${tienda.id}` : "/tiendas"}>
+            {tienda ? `Volver a gestión de ${tienda.nombre}` : "Ver comercios"}
+          </Link>
         </Button>
         {tienda ? (
           <Button asChild variant="fantasma" size="sm">

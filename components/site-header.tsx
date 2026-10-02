@@ -4,13 +4,13 @@ import { InterruptorTema } from "@/components/theme/interruptor-tema";
 import { METADATOS } from "@/data/sitio";
 import { cn } from "@/lib/utils";
 
-type Seccion = "inicio" | "directorio" | "tablero" | "quejas";
+type Seccion = "inicio" | "directorio" | "quejas" | "configuracion";
 
 const ENLACES: { texto: string; href: string; seccion: Seccion }[] = [
   { texto: "Inicio", href: "/", seccion: "inicio" },
   { texto: "Comercios", href: "/tiendas", seccion: "directorio" },
-  { texto: "Tablero", href: "/dashboard", seccion: "tablero" },
   { texto: "Reportar", href: "/dashboard/quejas", seccion: "quejas" },
+  { texto: "Configuración", href: "/configuracion", seccion: "configuracion" },
 ];
 
 /** Marca tipográfica del proyecto. Hereda `currentColor`. */

@@ -38,7 +38,13 @@ function tonoDeEstado(estado: Reporte["estado"]) {
  * Cumplimiento refleja el cambio en cuanto se vuelve a abrir. No hay dos
  * fuentes de verdad.
  */
-export function PestanaQuejas({ tiendaId }: { tiendaId: string }) {
+export function PestanaQuejas({
+  tiendaId,
+  administrador = false,
+}: {
+  tiendaId: string;
+  administrador?: boolean;
+}) {
   const reportes = usePanel((estado) => estado.reportes);
   const registrarReporte = usePanel((estado) => estado.registrarReporte);
   const alternarEstado = usePanel((estado) => estado.alternarEstadoReporte);
@@ -246,8 +252,8 @@ export function PestanaQuejas({ tiendaId }: { tiendaId: string }) {
                   {reporte.anonimo ? "Anónimo" : "Identificado"}
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <SeguimientoReporte reporte={reporte} />
-                  {reporte.estado === "resuelto" ? (
+                  {administrador ? <SeguimientoReporte reporte={reporte} /> : null}
+                  {administrador && reporte.estado === "resuelto" ? (
                     <Button
                       type="button"
                       variant="fantasma"

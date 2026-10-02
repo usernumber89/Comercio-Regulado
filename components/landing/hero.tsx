@@ -33,13 +33,13 @@ export function Hero() {
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Button asChild size="lg">
-            <Link href="/dashboard">
+            <Link href="/tiendas">
               {HERO.ctaPrimario}
               <ArrowRightIcon aria-hidden />
             </Link>
           </Button>
           <Button asChild size="lg" variant="contorno">
-            <Link href="/tiendas">{HERO.ctaSecundario}</Link>
+            <Link href="/configuracion">{HERO.ctaSecundario}</Link>
           </Button>
         </div>
 
@@ -92,8 +92,8 @@ export function Hero() {
         </ul>
 
         <div className="border-t border-[var(--borde)] px-5 py-4 sm:px-6">
-          <Link href="/dashboard" className="text-sm font-semibold text-[var(--mostaza-tinta)] hover:underline">
-            Ir al panel de administración <span aria-hidden>→</span>
+          <Link href="/tiendas" className="text-sm font-semibold text-[var(--mostaza-tinta)] hover:underline">
+            Seleccionar un comercio <span aria-hidden>→</span>
           </Link>
         </div>
       </aside>

@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { MapPinIcon, StarIcon } from "lucide-react";
+import { ArrowRightIcon, ExternalLinkIcon, MapPinIcon } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Insignia } from "@/components/ui/insignia";
 import { obtenerCategoria } from "@/data/tiendas";
 
@@ -9,17 +10,16 @@ export function TarjetaTienda({ tienda }: { tienda: import("@/types").Tienda }) 
   const categoria = obtenerCategoria(tienda.categoria);
 
   return (
-    <Link
-      href={`/tiendas/${tienda.id}`}
-      className="block h-full rounded-lg border border-[var(--borde)] bg-[var(--superficie)] p-5 transition-colors hover:border-[var(--bosque)]"
-    >
+    <article className="flex h-full flex-col rounded-lg border border-[var(--borde)] bg-[var(--superficie)] p-5 shadow-[var(--sombra-tenue)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-xs text-[var(--tinta-tenue)]">
             {tienda.codigo}
           </p>
-          <h2 className="mt-1 truncate font-serif text-lg font-semibold text-[var(--tinta)]">
+          <h2 className="mt-1 truncate font-serif text-lg font-semibold text-[var(--tinta)] hover:text-[var(--bosque-tinta)]">
+            <Link href={`/dashboard/${tienda.id}`}>
             {tienda.nombre}
+            </Link>
           </h2>
         </div>
         <span
@@ -44,10 +44,24 @@ export function TarjetaTienda({ tienda }: { tienda: import("@/types").Tienda }) 
         </span>
       </p>
 
-      <p className="mt-3 flex items-center gap-1.5 text-sm text-[var(--tinta-tenue)]">
-        <StarIcon aria-hidden className="size-4" />
-        Ver ficha, reseñas y denuncias
+      <p className="mt-3 flex items-start gap-1.5 text-xs leading-relaxed text-[var(--tinta-tenue)]">
+        <span className="min-w-0">Gestiona perfil, quejas, cumplimiento y beneficio.</span>
       </p>
-    </Link>
+
+      <div className="mt-auto flex flex-wrap gap-2 border-t border-[var(--borde)] pt-4">
+        <Button asChild size="sm">
+          <Link href={`/dashboard/${tienda.id}`}>
+            Abrir gestión
+            <ArrowRightIcon aria-hidden />
+          </Link>
+        </Button>
+        <Button asChild variant="contorno" size="sm">
+          <Link href={`/tiendas/${tienda.id}`}>
+            Ficha pública
+            <ExternalLinkIcon aria-hidden />
+          </Link>
+        </Button>
+      </div>
+    </article>
   );
 }

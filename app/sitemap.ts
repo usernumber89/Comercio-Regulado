@@ -6,8 +6,8 @@ import { listarTiendas } from "@/lib/repositorio";
 /**
  * sitemap.xml
  *
- * Se listan solo las páginas públicas. El tablero es interno y no tiene nada
- * que ofrecerle a un índice de búsqueda.
+ * Se listan solo las páginas públicas. La gestión individual es interna y no
+ * tiene nada que ofrecerle a un índice de búsqueda.
  *
  * El directorio y las fichas se leen de la base de datos, así que un comercio
  * dado de alta aparece en el mapa del sitio sin tocar nada. La ruta antigua

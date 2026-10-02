@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { Button } from "@/components/ui/button";
+import { useHidratado } from "@/lib/use-hidratado";
 import { useOrigen } from "@/lib/use-origen";
 import type { Tienda } from "@/types";
 
@@ -28,6 +29,7 @@ const LADO = 148;
  */
 export function CodigoQR({ tienda }: { tienda: Tienda }) {
   const { resolvedTheme } = useTheme();
+  const hidratado = useHidratado();
   const origen = useOrigen();
   const url = `${origen}/tiendas/${tienda.id}`;
   const [copiado, setCopiado] = useState(false);
@@ -48,7 +50,7 @@ export function CodigoQR({ tienda }: { tienda: Tienda }) {
     }
   }
 
-  const paleta = resolvedTheme === "dark" ? COLORES.dark : COLORES.light;
+  const paleta = hidratado && resolvedTheme === "dark" ? COLORES.dark : COLORES.light;
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -56,7 +58,7 @@ export function CodigoQR({ tienda }: { tienda: Tienda }) {
         className="shrink-0 rounded-lg border border-[var(--borde)] bg-[var(--superficie)] p-2.5"
         style={{ width: LADO + 20, height: LADO + 20 }}
       >
-        {/* Renderiza el mismo valor que el servidor: sin salto de hidratación. */}
+        {/* El tema oscuro se aplica tras hidratar para mantener el SVG estable. */}
         <QRCodeSVG
           value={url}
           size={LADO}

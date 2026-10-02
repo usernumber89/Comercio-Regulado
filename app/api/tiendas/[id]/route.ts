@@ -1,10 +1,15 @@
 import { cuerpo, error, leerTienda } from "@/lib/api";
+import { tieneSesionAdmin } from "@/lib/autenticacion-admin";
 import { actualizarTienda, eliminarTienda } from "@/lib/repositorio";
 
 export async function PATCH(
   request: Request,
   context: RouteContext<"/api/tiendas/[id]">,
 ) {
+  if (!(await tieneSesionAdmin())) {
+    return error("Inicia sesión para administrar los comercios.", 401);
+  }
+
   const { id } = await context.params;
   const lectura = leerTienda(await cuerpo(request));
   if (!lectura.ok) {
@@ -33,6 +38,10 @@ export async function DELETE(
   _request: Request,
   context: RouteContext<"/api/tiendas/[id]">,
 ) {
+  if (!(await tieneSesionAdmin())) {
+    return error("Inicia sesión para administrar los comercios.", 401);
+  }
+
   const { id } = await context.params;
 
   if (!(await eliminarTienda(id))) {

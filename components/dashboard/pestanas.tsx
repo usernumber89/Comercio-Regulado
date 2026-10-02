@@ -11,7 +11,6 @@ export const PESTANAS: { id: TabId; etiqueta: string }[] = [
   { id: "quejas", etiqueta: "Quejas" },
   { id: "cumplimiento", etiqueta: "Cumplimiento" },
   { id: "beneficio", etiqueta: "Beneficio" },
-  { id: "tiendas", etiqueta: "Tiendas" },
 ];
 
 /**

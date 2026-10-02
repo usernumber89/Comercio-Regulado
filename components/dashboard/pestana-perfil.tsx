@@ -20,13 +20,19 @@ import type { Tienda } from "@/types";
  * incluye imágenes de personas reales, y además evita que la ficha parezca
  * una perfil falso de una persona concreta.
  */
-export function PestanaPerfil({ tienda }: { tienda: Tienda }) {
+export function PestanaPerfil({
+  tienda,
+  editable = false,
+}: {
+  tienda: Tienda;
+  editable?: boolean;
+}) {
   const activos = Object.values(tienda.horarioSemanal).filter((d) => d.activo);
   const [editando, setEditando] = useState(false);
 
   return (
     <div className="space-y-8">
-      {editando ? (
+      {editable && editando ? (
         <FormularioTienda
           key={tienda.id}
           tienda={tienda}
@@ -34,12 +40,14 @@ export function PestanaPerfil({ tienda }: { tienda: Tienda }) {
         />
       ) : (
         <>
-          <div className="flex justify-end">
-            <Button type="button" variant="contorno" onClick={() => setEditando(true)}>
-              <PencilIcon aria-hidden />
-              Editar información
-            </Button>
-          </div>
+          {editable ? (
+            <div className="flex justify-end">
+              <Button type="button" variant="contorno" onClick={() => setEditando(true)}>
+                <PencilIcon aria-hidden />
+                Editar información
+              </Button>
+            </div>
+          ) : null}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <motion.section
           aria-labelledby="perfil-identidad"

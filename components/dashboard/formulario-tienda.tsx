@@ -177,7 +177,7 @@ export function FormularioTienda({
           {guardada} {tienda ? "se actualizó" : "quedó guardada"} correctamente.
           {tienda
             ? " La ficha y sus indicadores ya reflejan los cambios."
-            : " Ya está seleccionada en el tablero."}
+            : " Ya está disponible en Comercios."}
         </p>
       ) : null}
 

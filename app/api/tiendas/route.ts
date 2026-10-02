@@ -1,4 +1,5 @@
 import { cuerpo, error, leerTienda } from "@/lib/api";
+import { tieneSesionAdmin } from "@/lib/autenticacion-admin";
 import { crearTienda } from "@/lib/repositorio";
 
 /**
@@ -8,6 +9,10 @@ import { crearTienda } from "@/lib/repositorio";
  * el servidor y escribe una fila en la tabla de tiendas.
  */
 export async function POST(request: Request) {
+  if (!(await tieneSesionAdmin())) {
+    return error("Inicia sesión para administrar los comercios.", 401);
+  }
+
   const lectura = leerTienda(await cuerpo(request));
 
   if (!lectura.ok) {

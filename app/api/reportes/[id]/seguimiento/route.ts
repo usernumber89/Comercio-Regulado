@@ -1,10 +1,15 @@
 import { cuerpo, error, leerSeguimientoReporte } from "@/lib/api";
+import { tieneSesionAdmin } from "@/lib/autenticacion-admin";
 import { registrarSeguimientoReporte } from "@/lib/repositorio";
 
 export async function POST(
   request: Request,
   context: RouteContext<"/api/reportes/[id]/seguimiento">,
 ) {
+  if (!(await tieneSesionAdmin())) {
+    return error("Inicia sesión para administrar el seguimiento.", 401);
+  }
+
   const { id } = await context.params;
   const lectura = leerSeguimientoReporte(await cuerpo(request));
   if (!lectura.ok) return error(lectura.mensaje);

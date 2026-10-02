@@ -10,6 +10,7 @@ import { CATEGORIAS, obtenerCategoria } from "@/data/tiendas";
 import { calcularCumplimiento } from "@/lib/cumplimiento";
 import { formatearMoneda, formatearNumero } from "@/lib/format";
 import {
+  seleccionarCargando,
   seleccionarGuardando,
   useCatalogoTiendas,
   usePanel,
@@ -23,6 +24,7 @@ import {
 export function PestanaTiendas({ inicialAbierto = false }: { inicialAbierto?: boolean }) {
   const catalogo = useCatalogoTiendas();
   const reportes = usePanel((estado) => estado.reportes);
+  const cargando = usePanel(seleccionarCargando);
   const eliminarTienda = usePanel((estado) => estado.eliminarTienda);
   const guardando = usePanel(seleccionarGuardando);
 
@@ -72,7 +74,15 @@ export function PestanaTiendas({ inicialAbierto = false }: { inicialAbierto?: bo
           Comercios registrados
         </h2>
 
-        {catalogo.length === 0 ? (
+        {cargando ? (
+          <p
+            role="status"
+            aria-live="polite"
+            className="mt-3 rounded-lg border border-dashed border-[var(--borde-fuerte)] px-4 py-8 text-center text-sm text-[var(--tinta-tenue)]"
+          >
+            Consultando el catálogo…
+          </p>
+        ) : catalogo.length === 0 ? (
           <p className="mt-3 rounded-lg border border-dashed border-[var(--borde-fuerte)] px-4 py-8 text-center text-sm text-[var(--tinta-tenue)]">
             Todavía no hay comercios dados de alta. Usa el botón de arriba para
             registrar el primero.

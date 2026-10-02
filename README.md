@@ -8,10 +8,11 @@ incidencias, reseñas y cumplimiento desde un solo lugar.
 | Ruta                    | Qué hace                                                                 | Acceso  |
 | ----------------------- | ------------------------------------------------------------------------ | ------- |
 | `/`                     | Resumen de la plataforma y su flujo de trabajo                            | Pública |
-| `/tiendas`              | Directorio de todos los comercios, con buscador y filtro por rubro       | Pública |
+| `/tiendas`              | Selección de comercios para abrir su gestión o ficha pública             | Pública |
+| `/dashboard/[tiendaId]` | Gestión individual: perfil, quejas, cumplimiento y beneficio             | Interna |
+| `/configuracion`        | Alta y administración del catálogo de comercios                          | Interna |
 | `/tiendas/[tiendaId]`   | Ficha pública: código, horario, semáforo, reseñas y reportes            | Pública |
-| `/dashboard`            | Tablero de fichas: perfil, quejas, cumplimiento y beneficio             | Interna |
-| `/dashboard/quejas`     | Canal de quejas con folio, para compartir por WhatsApp                  | Interna |
+| `/dashboard/quejas`     | Canal de quejas con folio, para compartir por WhatsApp                  | Pública |
 | `/verificar/[tiendaId]` | Redirección permanente a la ficha, para los QR ya impresos              | Pública |
 
 El QR de cada ficha se arma con el origen real del sitio, así que el mismo
@@ -124,7 +125,7 @@ los Server Components no pueden pasarle callbacks por props: un `formato`
 de tipo `(valor: number) => string` rompe el prerender. Por eso el
 componente acepta `formato="numero" | "moneda" | "minutos" | "horas"`.
 
-**`MotionConfig reducedMotion="user"`.** Envuelve el tablero para que
+**`MotionConfig reducedMotion="user"`.** Envuelve la gestión de cada comercio para que
 framer-motion respete la preferencia del sistema en todo el subárbol, en lugar
 de desactivar animación a mano componente por componente.
 
@@ -151,9 +152,18 @@ permite que el QR y el enlace de WhatsApp sean correctos en cualquier entorno.
 2. En **Settings → Environment Variables** agregar las dos de Neon:
    `DATABASE_URL` (la del pooler) y `DIRECT_URL` (la directa), para
    Production, Preview y Development.
-3. Aceptar los valores detectados: framework **Next.js**, build
+3. Agregar `ADMIN_PASSWORD` (12 caracteres o más) y
+  `ADMIN_SESSION_SECRET` (secreto aleatorio de 32 bytes o más). No reutilices
+  la contraseña de Neon ni subas estos valores al repositorio. Para generar
+  el secreto localmente:
+
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
+```
+
+4. Aceptar los valores detectados: framework **Next.js**, build
    `npm run build`, output por defecto.
-4. Aplicar las migraciones una vez, desde la terminal, con la variable
+5. Aplicar las migraciones una vez, desde la terminal, con la variable
    `DIRECT_URL` apuntando a la base de producción:
 
 ```bash
@@ -165,11 +175,12 @@ real. Ese valor alimenta los metadatos, `sitemap.xml` y `robots.txt`; el QR y
 los enlaces de compartición usan el origen en tiempo de ejecución, así que se
 ajustan solos.
 
-> **Pendiente: no hay autenticación.** Cualquiera con la URL puede entrar al
-> tablero, dar de alta y borrar comercios, publicar reseñas y resolver
-> denuncias. Antes de publicarlo en abierto hay que proteger `/dashboard` y las
-> rutas de escritura con un login. El directorio y las fichas de `/tiendas` sí
-> deben seguir siendo públicos: son los que lee el código QR.
+> **Pendiente: no hay autenticación.** Cualquiera con la URL puede abrir la
+> gestión individual, Configuración, dar de alta y borrar comercios, publicar
+> reseñas y resolver denuncias. Antes de publicar en abierto, protege
+> `/dashboard/[tiendaId]`, `/configuracion` y las rutas de escritura con login.
+> El directorio y las fichas públicas de `/tiendas` deben seguir disponibles
+> para los residentes y los códigos QR.
 
 ## Reseñas
 
@@ -189,7 +200,8 @@ app/
   not-found.tsx           404
   robots.ts, sitemap.ts   SEO
   api/                    lectura y escritura en la base
-  dashboard/              tablero y canal de quejas
+  dashboard/              gestión individual por comercio y canal de quejas
+  configuracion/           alta y administración del catálogo
   tiendas/                directorio y ficha pública de cada comercio
   verificar/[tiendaId]/   redirección a la ficha, para los QR ya impresos
 components/
@@ -221,9 +233,9 @@ types/
 
 ## Alcance y límites
 
-- **No hay autenticación.** `/dashboard` y las operaciones de alta y borrado
-  son públicas. Antes de exponer el sitio hay que protegerlas con inicio de
-  sesión y permisos.
+- **No hay autenticación.** La gestión individual, Configuración y las
+  operaciones de escritura son públicas. Antes de exponer el sitio hay que
+  proteger `/dashboard/[tiendaId]`, `/configuracion` y las APIs con permisos.
 - **No hay moderación.** Las reseñas se publican al instante y no hay flujo de
   revisión ni forma de ocultarlas.
 - Las cifras económicas son estimaciones a partir de las compras declaradas por

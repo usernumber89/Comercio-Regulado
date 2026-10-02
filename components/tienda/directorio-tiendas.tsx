@@ -89,8 +89,8 @@ export function DirectorioTiendas({ tiendas }: { tiendas: Tienda[] }) {
           <p className="mt-2 text-sm text-[var(--tinta-suave)]">
             El directorio estará disponible cuando se publique el primer comercio.
           </p>
-          <Link href="/dashboard" className="mt-4 inline-block text-sm font-semibold text-[var(--mostaza-tinta)] hover:underline">
-            Ir al panel de administración
+          <Link href="/configuracion" className="mt-4 inline-block text-sm font-semibold text-[var(--mostaza-tinta)] hover:underline">
+            Agregar el primer comercio
           </Link>
         </div>
       ) : visibles.length === 0 ? (
