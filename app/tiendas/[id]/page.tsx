@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Anillo } from "@/components/dashboard/anillo-cumplimiento";
 import { CodigoQR } from "@/components/dashboard/codigo-qr";
 import { BotonesOpinion } from "@/components/tienda/botones-opinion";
+import { MapaUbicacionTienda } from "@/components/tienda/mapa-ubicacion-tienda";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ListaResenas, ResumenOpinion } from "@/components/opinion/resenas";
@@ -11,7 +12,7 @@ import { Insignia } from "@/components/ui/insignia";
 import { DIAS } from "@/lib/dias";
 import { formatearNumero } from "@/lib/format";
 import { calcularCumplimiento } from "@/lib/cumplimiento";
-import { fichaDeTienda } from "@/lib/repositorio";
+import { fichaDeTienda, listarTiendas } from "@/lib/repositorio";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,10 @@ export async function generateMetadata(
 
 export default async function PaginaTienda(props: PageProps<"/tiendas/[id]">) {
   const { id } = await props.params;
-  const ficha = await fichaDeTienda(id);
+  const [ficha, tiendas] = await Promise.all([
+    fichaDeTienda(id),
+    listarTiendas(),
+  ]);
 
   if (!ficha) notFound();
 
@@ -88,7 +92,7 @@ export default async function PaginaTienda(props: PageProps<"/tiendas/[id]">) {
               className="grid size-16 shrink-0 place-items-center rounded-full border border-[var(--borde-fuerte)] bg-[var(--superficie)] font-serif text-xl font-semibold text-[var(--bosque-tinta)]"
               aria-hidden
             >
-              {tienda.iniciales}
+              <img src="/1.png" alt="" className="h-full w-full rounded-full object-cover" />
             </span>
           </div>
 
@@ -292,6 +296,8 @@ export default async function PaginaTienda(props: PageProps<"/tiendas/[id]">) {
         <p className="mt-8 rounded-lg border border-[var(--borde)] bg-[var(--superficie)] p-4 text-sm leading-relaxed text-[var(--tinta-suave)]">
           {tienda.nota}
         </p>
+
+        <MapaUbicacionTienda tienda={tienda} tiendas={tiendas} />
 
         <section
           aria-labelledby="verificar-escanea"

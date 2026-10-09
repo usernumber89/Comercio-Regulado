@@ -1,11 +1,13 @@
 "use client";
 
-import { SearchIcon } from "lucide-react";
+import { LayoutGridIcon, MapIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { MapaTiendas } from "@/components/tienda/mapa-tiendas";
 import { TarjetaTienda } from "@/components/tienda/tarjeta-tienda";
 import { CATEGORIAS } from "@/data/tiendas";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -17,6 +19,7 @@ import {
 import type { Tienda } from "@/types";
 
 const TODAS = "todas";
+type VistaDirectorio = "mapa" | "tarjetas";
 
 /**
  * Directorio de comercios con buscador.
@@ -27,6 +30,7 @@ const TODAS = "todas";
 export function DirectorioTiendas({ tiendas }: { tiendas: Tienda[] }) {
   const [consulta, setConsulta] = useState("");
   const [categoria, setCategoria] = useState(TODAS);
+  const [vista, setVista] = useState<VistaDirectorio>("mapa");
 
   const visibles = useMemo(() => {
     const texto = consulta.trim().toLowerCase();
@@ -81,6 +85,33 @@ export function DirectorioTiendas({ tiendas }: { tiendas: Tienda[] }) {
         {visibles.length} resultado{visibles.length === 1 ? "" : "s"}
       </p>
 
+      <div
+        className="mt-4 flex flex-wrap gap-2"
+        role="group"
+        aria-label="Vista del directorio"
+      >
+        <Button
+          type="button"
+          size="sm"
+          variant={vista === "mapa" ? "default" : "contorno"}
+          aria-pressed={vista === "mapa"}
+          onClick={() => setVista("mapa")}
+        >
+          <MapIcon aria-hidden />
+          Mapa
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={vista === "tarjetas" ? "default" : "contorno"}
+          aria-pressed={vista === "tarjetas"}
+          onClick={() => setVista("tarjetas")}
+        >
+          <LayoutGridIcon aria-hidden />
+          Tarjetas
+        </Button>
+      </div>
+
       {tiendas.length === 0 ? (
         <div className="mt-6 rounded-lg border border-dashed border-[var(--borde-fuerte)] px-4 py-10 text-center">
           <p className="text-sm font-medium text-[var(--tinta)]">
@@ -97,6 +128,8 @@ export function DirectorioTiendas({ tiendas }: { tiendas: Tienda[] }) {
         <p className="mt-6 rounded-lg border border-dashed border-[var(--borde-fuerte)] px-4 py-10 text-center text-sm text-[var(--tinta-tenue)]">
           Ningún comercio coincide con esa búsqueda.
         </p>
+      ) : vista === "mapa" ? (
+        <MapaTiendas tiendas={visibles} ordenTiendas={tiendas} />
       ) : (
         <ul className="mt-4 grid gap-4 sm:grid-cols-2">
           {visibles.map((tienda) => (

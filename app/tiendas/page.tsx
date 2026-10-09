@@ -25,9 +25,9 @@ export default async function PaginaTiendas() {
       <SiteHeader seccion="directorio" />
       <main id="contenido" className="flex-1 bg-[var(--papel)]">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
-        <header className="filete-bosque border-t-2 border-t-[var(--bosque)] pt-5">
+        <header className=" pt-5">
           <p className="font-mono text-xs text-[var(--tinta-tenue)]">
-            Comercio Regulado · Comercios
+          
           </p>
           <h1 className="mt-2 font-serif text-3xl font-semibold text-balance text-[var(--tinta)] sm:text-4xl">
             Selecciona un comercio
@@ -37,12 +37,10 @@ export default async function PaginaTiendas() {
             y beneficios. La ficha pública de cada comercio sigue disponible
             por separado para residentes y visitantes.
           </p>
-          <p className="mt-3 font-mono text-xs text-[var(--tinta-tenue)]">
-            {tiendas.length} comercio{tiendas.length === 1 ? "" : "s"} ·{" "}
-            <Link href={SITIO_URL} className="underline underline-offset-4">
-              {SITIO_URL.replace(/^https?:\/\//, "")}
-            </Link>
-          </p>
+          <h1 className="mt-3 font-mono text-xs text-[var(--tinta-tenue)]">
+            La residencial cuenta con <b className="text-ms">{tiendas.length} comercio{tiendas.length === 1 ? "" : "s"} {" "}</b>
+            
+          </h1>
         </header>
 
         <DirectorioTiendas tiendas={tiendas} />

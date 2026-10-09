@@ -5,6 +5,7 @@ import { CargaDatos } from "@/components/carga-datos";
 import { ProveedorTema } from "@/components/theme/proveedor-tema";
 import { METADATOS, SITIO_URL } from "@/data/sitio";
 
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 /* IBM Plex aporta una jerarquía tipográfica coherente para interfaz y datos. */
