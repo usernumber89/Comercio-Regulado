@@ -4,12 +4,13 @@ import { InterruptorTema } from "@/components/theme/interruptor-tema";
 import { METADATOS } from "@/data/sitio";
 import { cn } from "@/lib/utils";
 
-type Seccion = "inicio" | "directorio" | "quejas" | "configuracion";
+type Seccion = "inicio" | "directorio" | "quejas" | "configuracion" | "comerciante";
 
 const ENLACES: { texto: string; href: string; seccion: Seccion }[] = [
   { texto: "Inicio", href: "/", seccion: "inicio" },
   { texto: "Comercios", href: "/tiendas", seccion: "directorio" },
   { texto: "Reportar", href: "/dashboard/quejas", seccion: "quejas" },
+  { texto: "Mi comercio", href: "/comerciante", seccion: "comerciante" },
   { texto: "Configuración", href: "/configuracion", seccion: "configuracion" },
 ];
 

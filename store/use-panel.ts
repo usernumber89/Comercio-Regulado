@@ -5,7 +5,16 @@ import { create } from "zustand";
 
 import * as api from "@/lib/cliente-api";
 import type { BorradorTienda } from "@/lib/tienda-formulario";
-import type { Reporte, Resena, TabId, TipoIncidente, Tienda, TiendaId } from "@/types";
+import type {
+  CategoriaConducta,
+  GravedadInfraccion,
+  Reporte,
+  Resena,
+  TabId,
+  TipoIncidente,
+  Tienda,
+  TiendaId,
+} from "@/types";
 
 /* ==========================================================================
    ESTADO DEL TABLERO
@@ -95,6 +104,24 @@ export interface PanelState {
   /** Guarda una reseña. Si es de una estrella, también devuelve su denuncia. */
   registrarResena: (datos: DatosOpinion) => Promise<OpinionRecibida>;
   alternarEstadoReporte: (id: string) => Promise<void>;
+  validarReporte: (
+    id: string,
+    datos: {
+      categoria?: CategoriaConducta;
+      gravedad?: GravedadInfraccion;
+      confirmadaClasificacion: boolean;
+    },
+  ) => Promise<Reporte>;
+  registrarSubsanacion: (id: string) => Promise<Reporte>;
+  impugnarReporte: (id: string, motivo: string) => Promise<Reporte>;
+  resolverImpugnacionReporte: (
+    id: string,
+    datos: Parameters<typeof api.resolverImpugnacionReporte>[1],
+  ) => Promise<Reporte>;
+  registrarSancionReporte: (
+    id: string,
+    datos: Parameters<typeof api.registrarSancionReporte>[1],
+  ) => Promise<Reporte>;
   /** Da de alta una tienda y la deja seleccionada. Devuelve la creada. */
   agregarTienda: (borrador: BorradorTienda) => Promise<Tienda>;
   /** Actualiza la ficha de una tienda existente. */
@@ -158,6 +185,46 @@ export const usePanel = create<PanelState>()((set, get) => ({
     set((estado) => ({
       reportes: estado.reportes.map((r) => (r.id === id ? reporte : r)),
     }));
+  },
+
+  validarReporte: async (id, datos) => {
+    const reporte = await api.validarReporte(id, datos);
+    set((estado) => ({
+      reportes: estado.reportes.map((actual) => actual.id === id ? reporte : actual),
+    }));
+    return reporte;
+  },
+
+  registrarSubsanacion: async (id) => {
+    const reporte = await api.registrarSubsanacion(id);
+    set((estado) => ({
+      reportes: estado.reportes.map((actual) => actual.id === id ? reporte : actual),
+    }));
+    return reporte;
+  },
+
+  impugnarReporte: async (id, motivo) => {
+    const reporte = await api.impugnarReporte(id, motivo);
+    set((estado) => ({
+      reportes: estado.reportes.map((actual) => actual.id === id ? reporte : actual),
+    }));
+    return reporte;
+  },
+
+  resolverImpugnacionReporte: async (id, datos) => {
+    const reporte = await api.resolverImpugnacionReporte(id, datos);
+    set((estado) => ({
+      reportes: estado.reportes.map((actual) => actual.id === id ? reporte : actual),
+    }));
+    return reporte;
+  },
+
+  registrarSancionReporte: async (id, datos) => {
+    const reporte = await api.registrarSancionReporte(id, datos);
+    set((estado) => ({
+      reportes: estado.reportes.map((actual) => actual.id === id ? reporte : actual),
+    }));
+    return reporte;
   },
 
   registrarSeguimientoReporte: async (id, datos) => {

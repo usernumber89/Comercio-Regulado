@@ -81,6 +81,43 @@ export const TIPOS_INCIDENTE: Record<
     etiqueta: "Seguridad",
     descripcion: "Afluencia excesiva, obstrucción de la vía o riesgo para los niños.",
   },
+  horario_menor: {
+    etiqueta: "Exceso de horario menor a 15 minutos",
+    descripcion: "Atención fuera del horario autorizado por menos de quince minutos.",
+  },
+  distintivo: {
+    etiqueta: "Distintivo oficial",
+    descripcion: "Omisión temporal en la exhibición del distintivo oficial.",
+  },
+  empaque_limpieza: {
+    etiqueta: "Empaque o limpieza menor",
+    descripcion: "Inconveniente menor de empaque o limpieza del establecimiento.",
+  },
+ 
+  proveedores_fuera_horario: {
+    etiqueta: "Proveedores fuera de horario",
+    descripcion: "Recepción de proveedores fuera del horario autorizado.",
+  },
+  permisos_sanitarios: {
+    etiqueta: "Permisos sanitarios",
+    descripcion: "Falta de permisos sanitarios exigidos por el Ministerio de Salud.",
+  },
+  productos_no_autorizados: {
+    etiqueta: "Productos no autorizados",
+    descripcion: "Venta de productos que requieren autorización y no están permitidos.",
+  },
+  alcohol_tabaco_sustancias: {
+    etiqueta: "Alcohol, tabaco o sustancias prohibidas",
+    descripcion: "Venta de bebidas alcohólicas, tabaco o sustancias prohibidas.",
+  },
+  alteracion_arquitectonica: {
+    etiqueta: "Alteración arquitectónica",
+    descripcion: "Solo reporta modificaciones estructurales permanentes, demolición o alteración de fachada o elemento portante exterior. Las intervenciones menores, no estructurales o temporales solo requieren verificación visual.",
+  },
+  desacato: {
+    etiqueta: "Desacato",
+    descripcion: "Agresión física o verbal, acoso, amenazas o negativa activa e injustificada a una inspección autorizada. No incluye discrepancias respetuosas, consultas, peticiones, recursos o denuncias formales.",
+  },
   otro: {
     etiqueta: "Otro",
     descripcion: "Cualquier situación que no encaje en las categorías anteriores.",

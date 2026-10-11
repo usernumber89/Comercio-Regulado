@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AlertTriangleIcon } from "lucide-react";
 
 import { Anillo } from "@/components/dashboard/anillo-cumplimiento";
@@ -7,6 +8,8 @@ import { Insignia } from "@/components/ui/insignia";
 import {
   calcularCumplimiento,
   dentroDeVentana,
+  persisteEstadoAmarillo,
+  puntosDeReporte,
   REGLA_CUMPLIMIENTO,
   UMBRALES,
 } from "@/lib/cumplimiento";
@@ -27,6 +30,13 @@ export function PestanaCumplimiento({ tienda }: { tienda: Tienda }) {
   const catalogo = useCatalogoTiendas();
 
   const resultado = calcularCumplimiento(reportes, tienda.id);
+  const evaluacionPrioritaria = reportes.some(
+    (reporte) =>
+      reporte.tiendaId === tienda.id &&
+      reporte.gravedad === "muy_grave" &&
+      puntosDeReporte(reporte) > 0,
+  );
+  const amarilloPersistente = persisteEstadoAmarillo(reportes, tienda.id);
 
   const recientes = reportes
     .filter((r) => r.tiendaId === tienda.id)
@@ -94,6 +104,11 @@ export function PestanaCumplimiento({ tienda }: { tienda: Tienda }) {
         <p className="max-w-64 border-t border-[var(--borde)] pt-3 text-center text-xs leading-relaxed text-[var(--tinta-tenue)]">
           {REGLA_CUMPLIMIENTO}
         </p>
+        {evaluacionPrioritaria ? (
+          <p role="alert" className="rounded-md border border-[var(--semaforo-rojo)] bg-[var(--semaforo-rojo-fondo)] p-3 text-center text-xs font-medium text-[var(--semaforo-rojo)]">
+            Infracción muy grave: evaluación prioritaria de Junta, aunque el puntaje esté en Amarillo.
+          </p>
+        ) : null}
       </section>
 
       <div className="min-w-0 space-y-5">
@@ -140,7 +155,18 @@ export function PestanaCumplimiento({ tienda }: { tienda: Tienda }) {
           <ul className="mt-4 border-t border-[var(--borde)]">
             {recientes.length > 0 ? (
               recientes.slice(0, 4).map((reporte) => {
-                const activo = reporte.estado === "activo";
+                const puntos = puntosDeReporte(reporte);
+                const suspendido = reporte.impugnacionEstado === "pendiente";
+                const etiqueta = !reporte.validado
+                  ? "Pendiente de validación"
+                  : suspendido
+                    ? "Impugnación · suspendido"
+                    : reporte.impugnacionEstado === "revocada"
+                      ? "Revocado"
+                      : reporte.gravedad
+                        ? `${reporte.gravedad.replace("_", " ")} · ${puntos} pts`
+                        : "Validado";
+                const activo = reporte.validado && puntos > 0 && !suspendido;
 
                 return (
                   <li
@@ -166,7 +192,7 @@ export function PestanaCumplimiento({ tienda }: { tienda: Tienda }) {
                               : "var(--semaforo-verde)",
                           }}
                         >
-                          {activo ? "Activo" : "Resuelto"}
+                          {etiqueta}
                         </span>
                       </div>
                       <time className="shrink-0 font-mono text-[0.6875rem] text-[var(--tinta-tenue)]">
@@ -178,6 +204,11 @@ export function PestanaCumplimiento({ tienda }: { tienda: Tienda }) {
                     <p className="mt-1.5 break-words text-sm leading-relaxed text-[var(--tinta-suave)]">
                       {reporte.descripcion}
                     </p>
+                    {reporte.fechaSubsanacion && !reporte.subsanadoEn ? (
+                      <p className="mt-1 text-xs text-[var(--mostaza-tinta)]">
+                        Plazo de subsanación: {new Intl.DateTimeFormat("es-SV", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(reporte.fechaSubsanacion))}
+                      </p>
+                    ) : null}
                   </li>
                 );
               })
@@ -187,6 +218,15 @@ export function PestanaCumplimiento({ tienda }: { tienda: Tienda }) {
               </li>
             )}
           </ul>
+
+          {resultado.rango === "observacion" ? (
+            <p role="status" className="mt-4 rounded-md border border-[var(--semaforo-amarillo)] bg-[var(--semaforo-amarillo-fondo)] p-3 text-sm leading-relaxed text-[var(--tinta-suave)]">
+              Estado Amarillo: notificar formalmente al comerciante e instruir mayor supervisión durante las rondas ordinarias de Seguridad.
+              {amarilloPersistente
+                ? " La permanencia supera 30 días consecutivos; procede tramitar amonestación escrita ante la Junta."
+                : ""}
+            </p>
+          ) : null}
         </section>
 
         <section
@@ -291,6 +331,45 @@ export function PestanaCumplimiento({ tienda }: { tienda: Tienda }) {
             ))}
           </ul>
         </section>
+
+        <details className="rounded-lg border border-[var(--borde)] bg-[var(--superficie)] p-5 sm:p-6">
+          <summary className="cursor-pointer font-serif text-lg font-semibold text-[var(--tinta)]">
+            Reglamento operativo y procedimiento sancionatorio
+          </summary>
+          <div className="mt-4 space-y-5 text-sm leading-relaxed text-[var(--tinta-suave)]">
+            <section aria-labelledby="reglamento-gravedades">
+              <h3 id="reglamento-gravedades" className="font-semibold text-[var(--tinta)]">Infracciones y consecuencias primarias</h3>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li><strong>Leve · −10 puntos</strong>: exceso de horario menor a 15 minutos, omisión temporal del distintivo oficial o inconveniente menor de empaque/limpieza. Notificación preventiva con cinco días hábiles para subsanar; si se verifica en plazo, el descuento queda en −5.</li>
+                <li><strong>Grave · −20 puntos</strong>: reincidencia leve de la misma categoría, venta a visitantes que entran solo a comprar, ruidos/aglomeraciones, falta de permisos sanitarios o recepción de proveedores fuera de horario. Amonestación escrita.</li>
+                <li><strong>Muy grave · −40 puntos</strong>: venta de alcohol, tabaco o sustancias prohibidas; alteración arquitectónica estructural; desacato. La primera infracción activa evaluación y audiencia prioritaria de Junta dentro de cinco días hábiles, aun en Estado Amarillo.</li>
+              </ul>
+            </section>
+            <section aria-labelledby="reglamento-categorias">
+              <h3 id="reglamento-categorias" className="font-semibold text-[var(--tinta)]">Categorías para reincidencia (seis meses)</h3>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>Horarios y Proveedores.</li>
+                <li>Convivencia, Ruidos y Circulación.</li>
+                <li>Sanitaria y Productos Autorizados.</li>
+                <li>Publicidad y Fachadas.</li>
+              </ul>
+              <p className="mt-2">Solo se considera reincidencia una infracción validada en la misma categoría dentro de seis meses o la omisión de subsanar una leve dentro de cinco días hábiles.</p>
+            </section>
+            <section aria-labelledby="reglamento-conceptos">
+              <h3 id="reglamento-conceptos" className="font-semibold text-[var(--tinta)]">Conceptos protegidos</h3>
+              <p className="mt-2">Desacato comprende agresión directa, acoso, amenazas o negativa activa e injustificada a inspección autorizada. Excluye discrepancias respetuosas, consultas, peticiones, recursos y denuncias formales contra Administración o Seguridad.</p>
+              <p className="mt-2">Alteración arquitectónica requiere modificación estructural permanente, demolición o alteración de fachada/elementos portantes exteriores. Intervenciones menores, no estructurales o temporales solo se verifican visualmente.</p>
+            </section>
+            <section aria-labelledby="reglamento-semaforo">
+              <h3 id="reglamento-semaforo" className="font-semibold text-[var(--tinta)]">Semáforo y sanciones progresivas</h3>
+              <p className="mt-2">Puntos = 100 − puntos de infracciones validadas activas en 30 días: Verde 80–100; Amarillo 40–79; Rojo 0–39. Amarillo persistente tras 30 días o leve no subsanada permite amonestación. Reincidencia grave o Rojo permite suspensión por 15 días. Primera muy grave: audiencia y suspensión de 15–30 días o medida correctiva. Revocación se reserva a reincidencia muy grave de la misma categoría o incumplimiento de suspensión. Toda sanción requiere audiencia previa y resolución motivada de Junta.</p>
+            </section>
+            <section aria-labelledby="reglamento-impugnacion">
+              <h3 id="reglamento-impugnacion" className="font-semibold text-[var(--tinta)]">Impugnación protegida</h3>
+              <p className="mt-2">El titular accede a <Link href="/comerciante" className="font-medium text-[var(--bosque-tinta)] underline">Mi comercio</Link> con la cuenta activada por invitación y dispone de cinco días hábiles desde la notificación. En esta configuración los plazos cuentan todos los días excepto los domingos. El acuse es inmediato; la revisión debe resolverse dentro de diez días hábiles por Administración o Comisión Árbitro imparcial. Reporte impugnado queda suspendido para puntaje y sanciones formales hasta la resolución; caben medidas preventivas temporales por riesgo a la salud o seguridad. El historial sancionatorio aplica durante seis meses.</p>
+            </section>
+          </div>
+        </details>
       </div>
     </div>
   );

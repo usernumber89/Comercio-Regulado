@@ -12,15 +12,49 @@ export type TipoIncidente =
   | "basura"
   | "estacionamiento"
   | "seguridad"
-  | "otro";
+  | "otro"
+  | "horario_menor"
+  | "distintivo"
+  | "empaque_limpieza"
+   
+  | "proveedores_fuera_horario"
+  | "permisos_sanitarios"
+  | "productos_no_autorizados"
+  | "alcohol_tabaco_sustancias"
+  | "alteracion_arquitectonica"
+  | "desacato";
 
 export type EstadoReporte = "activo" | "resuelto";
+export type GravedadInfraccion = "leve" | "grave" | "muy_grave";
+export type CategoriaConducta =
+  | "horarios_proveedores"
+  | "convivencia_ruidos_circulacion"
+  | "sanitaria_productos"
+  | "publicidad_fachadas";
+export type EstadoImpugnacion = "ninguna" | "pendiente" | "confirmada" | "revocada";
+export type TipoSancion =
+  | "amonestacion_escrita"
+  | "suspension"
+  | "revocacion"
+  | "medida_correctiva";
+
+export interface Sancion {
+  id: string;
+  tipo: TipoSancion;
+  motivo: string;
+  resolucion: string;
+  audienciaEn: string;
+  creadaEn: string;
+  vigenteHasta: string | null;
+  plazoCumplimiento: string | null;
+}
 
 export type TipoSeguimientoReporte =
   | "accion"
   | "ronda"
   | "evidencia"
   | "resolucion"
+  | "medida_preventiva"
   | "reapertura";
 
 export type TabId =
@@ -155,6 +189,21 @@ export interface Reporte {
   anonimo: boolean;
   estado: EstadoReporte;
   creadoEn: string;
+  validado: boolean;
+  gravedad: GravedadInfraccion | null;
+  categoriaConducta: CategoriaConducta | null;
+  validadoEn: string | null;
+  subsanadoEn: string | null;
+  fechaSubsanacion: string | null;
+  impugnacionEstado: EstadoImpugnacion;
+  impugnacionMotivo: string | null;
+  impugnacionEn: string | null;
+  resueltaImpugnacionEn: string | null;
+  revisorImpugnacion: string | null;
+  rolRevisorImpugnacion: string | null;
+  declaracionImparcialidad: boolean;
+  resolucionImpugnacion: string | null;
+  sanciones: Sancion[];
   accionCorrectiva: string | null;
   responsable: string | null;
   fechaLimite: string | null;
@@ -167,6 +216,8 @@ export interface SeguimientoReporte {
   detalle: string;
   responsable: string | null;
   evidenciaUrl: string | null;
+  peligroSaludSeguridad: boolean;
+  vigenteHasta: string | null;
   creadoEn: string;
 }
 

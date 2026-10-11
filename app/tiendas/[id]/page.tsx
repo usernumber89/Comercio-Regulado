@@ -141,14 +141,14 @@ export default async function PaginaTienda(props: PageProps<"/tiendas/[id]">) {
             </Insignia>
             <p className="mt-2.5 text-sm leading-relaxed text-[var(--tinta-suave)]">
               {cumplimiento.activos === 0
-                ? "Sin incidentes abiertos en los últimos 30 días."
-                : `${formatearNumero(cumplimiento.activos)} incidente${
+                ? "Sin infracciones validadas activas en los últimos 30 días."
+                : `${formatearNumero(cumplimiento.activos)} infracción${
                     cumplimiento.activos === 1 ? "" : "s"
-                  } abierto${cumplimiento.activos === 1 ? "" : "s"} en los últimos 30 días.`}
+                  } validada${cumplimiento.activos === 1 ? "" : "s"} en los últimos 30 días.`}
             </p>
             <p className="mt-1.5 text-xs leading-relaxed text-[var(--tinta-tenue)]">
-              Puntaje = 100 − 20 por cada incidente abierto. Una reseña de una
-              estrella cuenta como incidente.
+              Leve −10 (−5 al subsanar en plazo); grave −20; muy grave −40.
+              Los reportes pendientes de validación o impugnados no descuentan puntos.
             </p>
           </div>
         </section>

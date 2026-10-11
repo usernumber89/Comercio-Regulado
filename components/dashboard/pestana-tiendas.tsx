@@ -4,6 +4,7 @@ import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import { FormularioTienda } from "@/components/dashboard/formulario-tienda";
+import { InvitacionComerciante } from "@/components/configuracion/invitacion-comerciante";
 import { Button } from "@/components/ui/button";
 import { Insignia } from "@/components/ui/insignia";
 import { CATEGORIAS, obtenerCategoria } from "@/data/tiendas";
@@ -136,18 +137,21 @@ export function PestanaTiendas({ inicialAbierto = false }: { inicialAbierto?: bo
                     </p>
                   </div>
 
-                  <Button
-                    type="button"
-                    variant="fantasma"
-                    size="sm"
-                    disabled={guardando}
-                    onClick={() => void eliminarTienda(tienda.id)}
-                    aria-label={`Eliminar ${tienda.nombre}`}
-                    className="text-[var(--terracota-tinta)] hover:bg-[var(--terracota-lavado)] hover:text-[var(--terracota-tinta)]"
-                  >
-                    <Trash2Icon aria-hidden />
-                    Eliminar
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <InvitacionComerciante tiendaId={tienda.id} nombre={tienda.nombre} />
+                    <Button
+                      type="button"
+                      variant="fantasma"
+                      size="sm"
+                      disabled={guardando}
+                      onClick={() => void eliminarTienda(tienda.id)}
+                      aria-label={`Eliminar ${tienda.nombre}`}
+                      className="text-[var(--terracota-tinta)] hover:bg-[var(--terracota-lavado)] hover:text-[var(--terracota-tinta)]"
+                    >
+                      <Trash2Icon aria-hidden />
+                      Eliminar
+                    </Button>
+                  </div>
                 </li>
               );
             })}

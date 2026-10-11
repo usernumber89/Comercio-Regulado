@@ -71,13 +71,6 @@ export function PestanaQuejas({
     [reportes, tiendaId],
   );
 
-  // Puntaje que quedaría si se enviara el formulario tal como está. Se
-  // calcula con un reporte sintético, sin tocar el estado real.
-  const puntajePronostico = useMemo(() => {
-    if (descripcion.trim().length < DESCRIPCION_MINIMA) return cumplimiento.puntaje;
-    return Math.max(0, cumplimiento.puntaje - 20);
-  }, [cumplimiento.puntaje, descripcion]);
-
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
 
@@ -119,8 +112,9 @@ export function PestanaQuejas({
           Registrar un incidente
         </h2>
         <p className="mt-1.5 text-sm leading-relaxed text-[var(--tinta-suave)]">
-          Cada reporte recibe un folio y queda activo durante treinta días.
-          Resolverlo devuelve los veinte puntos correspondientes al puntaje.
+          El reporte recibe un folio y queda pendiente de validación. Solo una
+          infracción validada afecta el semáforo; puede impugnarse dentro de
+          cinco días hábiles desde la notificación.
         </p>
 
         <form onSubmit={enviar} className="mt-5 space-y-4" noValidate>
@@ -191,13 +185,7 @@ export function PestanaQuejas({
             </Button>
 
             <p className="font-mono text-xs text-[var(--tinta-tenue)]">
-              Puntaje {cumplimiento.puntaje}
-              {puntajePronostico !== cumplimiento.puntaje ? (
-                <span className="text-[var(--mostaza-tinta)]">
-                  {" "}
-                  · al enviar pasará a {puntajePronostico}
-                </span>
-              ) : null}
+              Semáforo {cumplimiento.puntaje} pts · el reporte queda pendiente de validación
             </p>
           </div>
         </form>
@@ -236,7 +224,13 @@ export function PestanaQuejas({
                   {TIPOS_INCIDENTE[reporte.tipo].etiqueta}
                 </span>
                 <Insignia tono={tonoDeEstado(reporte.estado)}>
-                  {reporte.estado === "activo" ? "Activo" : "Resuelto"}
+                  {!reporte.validado
+                    ? "Pendiente de validación"
+                    : reporte.impugnacionEstado === "pendiente"
+                      ? "Impugnado · suspendido"
+                      : reporte.estado === "activo"
+                        ? "Validado"
+                        : "Resuelto"}
                 </Insignia>
                 <span className="ml-auto font-mono text-xs text-[var(--tinta-tenue)]">
                   {tiempoRelativo(reporte.creadoEn)}

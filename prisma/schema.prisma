@@ -62,6 +62,16 @@ enum TipoIncidente {
   estacionamiento
   seguridad
   otro
+  horario_menor
+  distintivo
+  empaque_limpieza
+  venta_visitantes
+  proveedores_fuera_horario
+  permisos_sanitarios
+  productos_no_autorizados
+  alcohol_tabaco_sustancias
+  alteracion_arquitectonica
+  desacato
 }
 
 enum Estado {
@@ -74,7 +84,35 @@ enum TipoSeguimientoReporte {
   ronda
   evidencia
   resolucion
+  medida_preventiva
   reapertura
+}
+
+enum GravedadInfraccion {
+  leve
+  grave
+  muy_grave
+}
+
+enum CategoriaConducta {
+  horarios_proveedores
+  convivencia_ruidos_circulacion
+  sanitaria_productos
+  publicidad_fachadas
+}
+
+enum EstadoImpugnacion {
+  ninguna
+  pendiente
+  confirmada
+  revocada
+}
+
+enum TipoSancion {
+  amonestacion_escrita
+  suspension
+  revocacion
+  medida_correctiva
 }
 
 // ===========================================================================
@@ -140,6 +178,8 @@ model Tienda {
 
   reportes Reporte[]
   resenas  Resena[]
+  cuenta   CuentaComerciante?
+  invitaciones InvitacionComerciante[]
 }
 
 // ===========================================================================
@@ -173,6 +213,20 @@ model Reporte {
   anonimo     Boolean       @default(false)
   estado      Estado        @default(activo)
   creadoEn    DateTime      @default(now())
+  validado    Boolean       @default(false)
+  gravedad    GravedadInfraccion?
+  categoriaConducta CategoriaConducta?
+  validadoEn DateTime?
+  subsanadoEn DateTime?
+  fechaSubsanacion DateTime?
+  impugnacionEstado EstadoImpugnacion @default(ninguna)
+  impugnacionMotivo String?
+  impugnacionEn DateTime?
+  resueltaImpugnacionEn DateTime?
+  revisorImpugnacion String?
+  rolRevisorImpugnacion String?
+  declaracionImparcialidad Boolean @default(false)
+  resolucionImpugnacion String?
   accionCorrectiva String?
   responsable      String?
   fechaLimite      DateTime?
@@ -182,9 +236,49 @@ model Reporte {
   /// Al borrar una tienda se van sus reportes con ella.
   tienda Tienda @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
   seguimientos SeguimientoReporte[]
+  sanciones Sancion[]
 
   @@index([tiendaId])
   @@index([creadoEn])
+}
+
+model Sancion {
+  id String @id @default(cuid())
+  reporteId String
+  tipo TipoSancion
+  motivo String
+  resolucion String
+  audienciaEn DateTime
+  creadaEn DateTime @default(now())
+  vigenteHasta DateTime?
+  plazoCumplimiento DateTime?
+
+  reporte Reporte @relation(fields: [reporteId], references: [id], onDelete: Cascade)
+
+  @@index([reporteId, creadaEn])
+  @@index([creadaEn])
+}
+
+model CuentaComerciante {
+  id String @id @default(cuid())
+  tiendaId String @unique
+  passwordHash String
+  creadaEn DateTime @default(now())
+
+  tienda Tienda @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+}
+
+model InvitacionComerciante {
+  id String @id @default(cuid())
+  tiendaId String
+  codigoHash String @unique
+  expiraEn DateTime
+  usadaEn DateTime?
+  creadaEn DateTime @default(now())
+
+  tienda Tienda @relation(fields: [tiendaId], references: [id], onDelete: Cascade)
+
+  @@index([tiendaId, expiraEn])
 }
 
 model SeguimientoReporte {
@@ -194,6 +288,8 @@ model SeguimientoReporte {
   detalle     String
   responsable String?
   evidenciaUrl String?
+  peligroSaludSeguridad Boolean @default(false)
+  vigenteHasta DateTime?
   creadoEn    DateTime               @default(now())
 
   reporte Reporte @relation(fields: [reporteId], references: [id], onDelete: Cascade)

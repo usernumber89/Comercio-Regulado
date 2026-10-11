@@ -4,21 +4,37 @@ import type { BorradorTienda } from "@/lib/tienda-formulario";
 import { Prisma } from "@/prisma/generated/client";
 import type {
   Resena as FilaResena,
+  Sancion as FilaSancion,
   SeguimientoReporte as FilaSeguimientoReporte,
   Tienda as FilaTienda,
 } from "@/prisma/generated/client";
+import {
+  categoriaDeTipo,
+  dentroDeVentanaSeisMeses,
+  gravedadBaseDeTipo,
+  limiteHistorialSeisMeses,
+  persisteEstadoAmarillo,
+  puntosDeReporte,
+  reincidenciaValidada,
+  requiereGravePorReincidencia,
+  sumarDiasHabiles,
+} from "@/lib/cumplimiento";
 import type {
+  CategoriaConducta,
   CategoriaTienda,
   DiaSemana,
   EstadoSistema,
+  GravedadInfraccion,
   HorarioDia,
   Opinion,
   Reporte,
   Resena,
+  Sancion,
   SeguimientoReporte,
   Tienda,
   TiendaId,
   TiendaSinCodigo,
+  TipoSancion,
 } from "@/types";
 
 export type { EstadoSistema };
@@ -102,8 +118,21 @@ function aTienda(fila: FilaTienda): Tienda {
 }
 
 type FilaReporteConSeguimientos = Prisma.ReporteGetPayload<{
-  include: { seguimientos: true };
+  include: { seguimientos: true; sanciones: true };
 }>;
+
+function aSancion(fila: FilaSancion): Sancion {
+  return {
+    id: fila.id,
+    tipo: fila.tipo,
+    motivo: fila.motivo,
+    resolucion: fila.resolucion,
+    audienciaEn: fila.audienciaEn.toISOString(),
+    creadaEn: fila.creadaEn.toISOString(),
+    vigenteHasta: fila.vigenteHasta?.toISOString() ?? null,
+    plazoCumplimiento: fila.plazoCumplimiento?.toISOString() ?? null,
+  };
+}
 
 function aSeguimiento(fila: FilaSeguimientoReporte): SeguimientoReporte {
   return {
@@ -112,6 +141,8 @@ function aSeguimiento(fila: FilaSeguimientoReporte): SeguimientoReporte {
     detalle: fila.detalle,
     responsable: fila.responsable,
     evidenciaUrl: fila.evidenciaUrl,
+    peligroSaludSeguridad: fila.peligroSaludSeguridad,
+    vigenteHasta: fila.vigenteHasta?.toISOString() ?? null,
     creadoEn: fila.creadoEn.toISOString(),
   };
 }
@@ -126,6 +157,23 @@ function aReporte(fila: FilaReporteConSeguimientos): Reporte {
     anonimo: fila.anonimo,
     estado: fila.estado,
     creadoEn: fila.creadoEn.toISOString(),
+    validado: fila.validado,
+    gravedad: fila.gravedad,
+    categoriaConducta: fila.categoriaConducta,
+    validadoEn: fila.validadoEn?.toISOString() ?? null,
+    subsanadoEn: fila.subsanadoEn?.toISOString() ?? null,
+    fechaSubsanacion: fila.fechaSubsanacion?.toISOString() ?? null,
+    impugnacionEstado: fila.impugnacionEstado,
+    impugnacionMotivo: fila.impugnacionMotivo,
+    impugnacionEn: fila.impugnacionEn?.toISOString() ?? null,
+    resueltaImpugnacionEn: fila.resueltaImpugnacionEn?.toISOString() ?? null,
+    revisorImpugnacion: fila.revisorImpugnacion,
+    rolRevisorImpugnacion: fila.rolRevisorImpugnacion,
+    declaracionImparcialidad: fila.declaracionImparcialidad,
+    resolucionImpugnacion: fila.resolucionImpugnacion,
+    sanciones: fila.sanciones
+      .filter((sancion) => dentroDeVentanaSeisMeses(sancion.creadaEn))
+      .map(aSancion),
     accionCorrectiva: fila.accionCorrectiva,
     responsable: fila.responsable,
     fechaLimite: fila.fechaLimite?.toISOString() ?? null,
@@ -318,9 +366,16 @@ export async function eliminarTienda(id: string): Promise<boolean> {
 
 /** Historial completo, del más reciente al más antiguo. */
 export async function listarReportes(): Promise<Reporte[]> {
-  const filas = await obtenerPrisma().reporte.findMany({
+  const db = obtenerPrisma();
+  await db.sancion.deleteMany({
+    where: { creadaEn: { lt: limiteHistorialSeisMeses() } },
+  });
+  const filas = await db.reporte.findMany({
     orderBy: [{ creadoEn: "desc" }, { folio: "desc" }],
-    include: { seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] } },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
   });
 
   return filas.map(aReporte);
@@ -329,7 +384,10 @@ export async function listarReportes(): Promise<Reporte[]> {
 export async function obtenerReporte(id: string): Promise<Reporte | undefined> {
   const fila = await obtenerPrisma().reporte.findUnique({
     where: { id },
-    include: { seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] } },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
   });
 
   return fila ? aReporte(fila) : undefined;
@@ -355,7 +413,7 @@ export async function registrarReporte(datos: {
       descripcion: datos.descripcion.trim(),
       anonimo: datos.anonimo,
     },
-    include: { seguimientos: true },
+    include: { seguimientos: true, sanciones: true },
   });
 
   return aReporte(fila);
@@ -390,7 +448,10 @@ export async function alternarEstadoReporte(
         },
       },
     },
-    include: { seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] } },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
   });
 
   return aReporte(fila);
@@ -399,22 +460,33 @@ export async function alternarEstadoReporte(
 export async function registrarSeguimientoReporte(
   id: string,
   datos: {
-    tipo: "accion" | "ronda" | "evidencia" | "resolucion";
+    tipo: Exclude<SeguimientoReporte["tipo"], "reapertura">;
     detalle: string;
     responsable: string | null;
     fechaLimite: string | null;
     evidenciaUrl: string | null;
+    peligroSaludSeguridad: boolean;
+    vigenteHasta: string | null;
   },
 ): Promise<Reporte | undefined> {
   const db = obtenerPrisma();
   const actual = await db.reporte.findUnique({
     where: { id },
-    select: { estado: true },
+    select: { estado: true, validado: true, impugnacionEstado: true },
   });
 
   if (!actual) return undefined;
   if (actual.estado === "resuelto") {
     throw new Error("Reabre el reporte antes de registrar más seguimiento.");
+  }
+  if (
+    datos.tipo === "medida_preventiva" &&
+    (!actual.validado || actual.impugnacionEstado !== "pendiente" || !datos.peligroSaludSeguridad)
+  ) {
+    throw new Error("Una medida preventiva durante la impugnación requiere un reporte validado, una impugnación pendiente y peligro para la salud o seguridad.");
+  }
+  if (datos.tipo !== "medida_preventiva" && actual.impugnacionEstado === "pendiente") {
+    throw new Error("Durante una impugnación pendiente solo se pueden registrar medidas preventivas por peligro para la salud o seguridad.");
   }
 
   const fila = await db.reporte.update({
@@ -434,13 +506,350 @@ export async function registrarSeguimientoReporte(
           detalle: datos.detalle,
           responsable: datos.responsable,
           evidenciaUrl: datos.evidenciaUrl,
+          peligroSaludSeguridad: datos.peligroSaludSeguridad,
+          vigenteHasta: datos.vigenteHasta
+            ? new Date(`${datos.vigenteHasta}T23:59:59.999Z`)
+            : null,
         },
       },
     },
-    include: { seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] } },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
   });
 
   return aReporte(fila);
+}
+
+export async function validarReporte(
+  id: string,
+  clasificacion: {
+    categoria: CategoriaConducta | null;
+    gravedad: GravedadInfraccion | null;
+  },
+): Promise<Reporte | undefined> {
+  const db = obtenerPrisma();
+  const fila = await db.reporte.findUnique({
+    where: { id },
+    include: { seguimientos: true, sanciones: true },
+  });
+  if (!fila) return undefined;
+  if (fila.validado) throw new Error("Este reporte ya fue validado.");
+  if (fila.impugnacionEstado === "pendiente") {
+    throw new Error("Resuelve la impugnación antes de validar el reporte.");
+  }
+
+  if (
+    fila.tipo === "otro" &&
+    (!clasificacion.categoria || !clasificacion.gravedad)
+  ) {
+    throw new Error("Clasifica el reporte dentro de una conducta del reglamento antes de validarlo.");
+  }
+  const categoria = clasificacion.categoria ?? categoriaDeTipo(fila.tipo);
+  const gravedadBase = clasificacion.gravedad ?? gravedadBaseDeTipo(fila.tipo);
+  if (
+    fila.tipo !== "otro" &&
+    ((clasificacion.categoria && clasificacion.categoria !== categoriaDeTipo(fila.tipo)) ||
+      (clasificacion.gravedad && clasificacion.gravedad !== gravedadBaseDeTipo(fila.tipo)))
+  ) {
+    throw new Error("La gravedad y categoría de este tipo de conducta no se pueden sustituir.");
+  }
+  const gravedad: GravedadInfraccion =
+    gravedadBase === "leve" &&
+    requiereGravePorReincidencia(
+      (await listarReportes()).filter((reporte) => reporte.id !== id),
+      fila.tiendaId,
+      categoria,
+    )
+      ? "grave"
+      : gravedadBase;
+  const ahora = new Date();
+
+  const actualizada = await db.reporte.update({
+    where: { id },
+    data: {
+      validado: true,
+      gravedad,
+      categoriaConducta: categoria,
+      validadoEn: ahora,
+      ...(gravedad === "leve"
+        ? { fechaSubsanacion: sumarDiasHabiles(ahora, 5) }
+        : {}),
+    },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
+  });
+
+  return aReporte(actualizada);
+}
+
+export async function registrarSubsanacion(id: string): Promise<Reporte | undefined> {
+  const fila = await obtenerPrisma().reporte.findUnique({
+    where: { id },
+    select: { validado: true, gravedad: true, subsanadoEn: true },
+  });
+  if (!fila) return undefined;
+  if (!fila.validado || fila.gravedad !== "leve") {
+    throw new Error("Solo se puede registrar la subsanación de una infracción leve validada.");
+  }
+  if (fila.subsanadoEn) throw new Error("La subsanación ya está registrada.");
+
+  const actualizada = await obtenerPrisma().reporte.update({
+    where: { id },
+    data: { subsanadoEn: new Date() },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
+  });
+  return aReporte(actualizada);
+}
+
+export async function impugnarReporte(
+  id: string,
+  tiendaId: string,
+  motivo: string,
+): Promise<Reporte | undefined> {
+  const fila = await obtenerPrisma().reporte.findFirst({
+    where: { id, tiendaId },
+    select: {
+      id: true,
+      validado: true,
+      validadoEn: true,
+      impugnacionEstado: true,
+    },
+  });
+  if (!fila) return undefined;
+  if (!fila.validado || !fila.validadoEn) {
+    throw new Error("Solo se puede impugnar un reporte ya notificado y calificado.");
+  }
+  if (Date.now() > sumarDiasHabiles(fila.validadoEn, 5).getTime()) {
+    throw new Error("El plazo de cinco días hábiles para impugnar ya venció.");
+  }
+  if (fila.impugnacionEstado === "pendiente") {
+    throw new Error("Ya existe una impugnación pendiente para este reporte.");
+  }
+  if (fila.impugnacionEstado === "confirmada" || fila.impugnacionEstado === "revocada") {
+    throw new Error("Este reporte ya tiene una resolución de impugnación.");
+  }
+
+  const ahora = new Date();
+  const actualizada = await obtenerPrisma().reporte.update({
+    where: { id },
+    data: {
+      impugnacionEstado: "pendiente",
+      impugnacionMotivo: motivo,
+      impugnacionEn: ahora,
+      revisorImpugnacion: null,
+      rolRevisorImpugnacion: null,
+      declaracionImparcialidad: false,
+    },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
+  });
+  return aReporte(actualizada);
+}
+
+export async function resolverImpugnacion(
+  id: string,
+  datos: {
+    confirmar: boolean;
+    revisor: string;
+    rol: "administrador" | "comision_arbitro";
+    resolucion: string;
+  },
+): Promise<Reporte | undefined> {
+  const fila = await obtenerPrisma().reporte.findUnique({
+    where: { id },
+    select: { impugnacionEstado: true },
+  });
+  if (!fila) return undefined;
+  if (fila.impugnacionEstado !== "pendiente") {
+    throw new Error("El reporte no tiene una impugnación pendiente.");
+  }
+
+  const actualizada = await obtenerPrisma().reporte.update({
+    where: { id },
+    data: {
+      impugnacionEstado: datos.confirmar ? "confirmada" : "revocada",
+      resueltaImpugnacionEn: new Date(),
+      revisorImpugnacion: datos.revisor,
+      rolRevisorImpugnacion: datos.rol,
+      declaracionImparcialidad: true,
+      resolucionImpugnacion: datos.resolucion,
+    },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
+  });
+  return aReporte(actualizada);
+}
+
+export async function registrarSancion(
+  id: string,
+  datos: {
+    tipo: TipoSancion;
+    motivo: string;
+    resolucion: string;
+    audienciaEn: string;
+    diasSuspension: number | null;
+  },
+): Promise<Reporte | undefined> {
+  const db = obtenerPrisma();
+  const fila = await db.reporte.findUnique({
+    where: { id },
+    include: { sanciones: true },
+  });
+  if (!fila) return undefined;
+  if (!fila.validado || fila.impugnacionEstado === "pendiente" || fila.impugnacionEstado === "revocada") {
+    throw new Error("Solo se puede sancionar un reporte validado y sin impugnación pendiente o revocada.");
+  }
+
+  const audiencia = new Date(`${datos.audienciaEn}T00:00:00.000Z`);
+  if (Number.isNaN(audiencia.getTime())) {
+    throw new Error("Indica la fecha válida de la audiencia previa.");
+  }
+  const fechaAudiencia = audiencia.toISOString().slice(0, 10);
+  const hoy = new Date().toISOString().slice(0, 10);
+  if (fechaAudiencia > hoy) {
+    throw new Error("Debe constar la audiencia previa antes de aplicar una sanción.");
+  }
+  if (
+    fila.validadoEn &&
+    fechaAudiencia < fila.validadoEn.toISOString().slice(0, 10)
+  ) {
+    throw new Error("La audiencia debe ser posterior a la notificación de la infracción.");
+  }
+  if (
+    fila.gravedad === "muy_grave" &&
+    fila.validadoEn &&
+    fechaAudiencia >
+      sumarDiasHabiles(fila.validadoEn, 5).toISOString().slice(0, 10)
+  ) {
+    throw new Error("La audiencia prioritaria por infracción muy grave debe celebrarse dentro de cinco días hábiles.");
+  }
+
+  const historial = await listarReportes();
+  const reincidencia = reincidenciaValidada(
+    historial.filter((reporte) => reporte.id !== id),
+    fila.tiendaId,
+    fila.categoriaConducta ?? categoriaDeTipo(fila.tipo),
+    "grave",
+  );
+  const leveNoSubsanada =
+    fila.gravedad === "leve" &&
+    fila.fechaSubsanacion !== null &&
+    (fila.subsanadoEn === null ||
+      fila.subsanadoEn.getTime() > fila.fechaSubsanacion.getTime()) &&
+    Date.now() > fila.fechaSubsanacion.getTime();
+  const puntaje = Math.max(
+    0,
+    100 -
+      historial
+        .filter((reporte) => reporte.tiendaId === fila.tiendaId)
+        .reduce((total, reporte) => total + puntosDeReporte(reporte), 0),
+  );
+
+  if (datos.tipo === "amonestacion_escrita") {
+    const procedente =
+      fila.gravedad === "grave" ||
+      leveNoSubsanada ||
+      (fila.gravedad !== "muy_grave" &&
+        puntaje >= 40 &&
+        puntaje < 80 &&
+        persisteEstadoAmarillo(historial, fila.tiendaId));
+    if (!procedente) throw new Error("La amonestación no procede conforme al estado de este expediente.");
+    if (
+      fila.gravedad === "grave" &&
+      fila.sanciones.some((sancion) => sancion.tipo === "amonestacion_escrita")
+    ) {
+      throw new Error("Este reporte ya tiene amonestación escrita.");
+    }
+  }
+  if (datos.tipo === "suspension") {
+    const procede =
+      fila.gravedad === "muy_grave" ||
+      (fila.gravedad === "grave" && reincidencia) ||
+      puntaje < 40;
+    if (!procede) throw new Error("La suspensión requiere una primera infracción muy grave, reincidencia grave o Estado Rojo.");
+    if (fila.sanciones.some((sancion) => sancion.tipo === "suspension")) {
+      throw new Error("Ya existe una suspensión registrada para este reporte.");
+    }
+    const dias = datos.diasSuspension;
+    if (
+      !Number.isInteger(dias) ||
+      dias === null ||
+      (fila.gravedad === "muy_grave" ? dias < 15 || dias > 30 : dias !== 15)
+    ) {
+      throw new Error("La suspensión es de 15 días; para una primera infracción muy grave, de 15 a 30 días.");
+    }
+  }
+  if (datos.tipo === "medida_correctiva" && fila.gravedad !== "muy_grave") {
+    throw new Error("Las medidas correctivas especiales de este procedimiento corresponden a infracciones muy graves.");
+  }
+  if (datos.tipo === "revocacion") {
+    const categoria = fila.categoriaConducta ?? categoriaDeTipo(fila.tipo);
+    const muyGraveReincidente =
+      fila.gravedad === "muy_grave" &&
+      reincidenciaValidada(
+        historial.filter((reporte) => reporte.id !== id),
+        fila.tiendaId,
+        categoria,
+        "muy_grave",
+      );
+    const incumpleSuspension = historial.some((anterior) =>
+      anterior.tiendaId === fila.tiendaId &&
+      new Date(anterior.creadoEn).getTime() < fila.creadoEn.getTime() &&
+      anterior.sanciones.some(
+        (sancion) =>
+          sancion.tipo === "suspension" &&
+          sancion.creadaEn <= fila.creadoEn.toISOString() &&
+          sancion.vigenteHasta &&
+          sancion.vigenteHasta > fila.creadoEn.toISOString(),
+      ),
+    );
+    if (!muyGraveReincidente && !incumpleSuspension) {
+      throw new Error("La revocación solo procede por reincidencia muy grave en la misma categoría o incumplimiento de una suspensión vigente.");
+    }
+    if (fila.sanciones.some((sancion) => sancion.tipo === "revocacion")) {
+      throw new Error("Este reporte ya tiene una revocación registrada.");
+    }
+  }
+
+  const vigenteHasta =
+    datos.tipo === "suspension"
+      ? new Date(Date.now() + (datos.diasSuspension ?? 15) * 86_400_000)
+      : null;
+  const plazoCumplimiento =
+    datos.tipo === "amonestacion_escrita" && (leveNoSubsanada || persisteEstadoAmarillo(historial, fila.tiendaId))
+      ? sumarDiasHabiles(new Date(), 5)
+      : null;
+  const actualizada = await db.reporte.update({
+    where: { id },
+    data: {
+      sanciones: {
+        create: {
+          tipo: datos.tipo,
+          motivo: datos.motivo,
+          resolucion: datos.resolucion,
+          audienciaEn: audiencia,
+          vigenteHasta,
+          plazoCumplimiento,
+        },
+      },
+    },
+    include: {
+      seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+      sanciones: { orderBy: { creadaEn: "desc" } },
+    },
+  });
+  return aReporte(actualizada);
 }
 
 /* --------------------------------------------------------------------------
@@ -576,7 +985,10 @@ export async function fichaDeTienda(
       .reporte.findMany({
         where: { tiendaId },
         orderBy: [{ creadoEn: "desc" }, { folio: "desc" }],
-        include: { seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] } },
+        include: {
+          seguimientos: { orderBy: [{ creadoEn: "desc" }, { id: "desc" }] },
+          sanciones: { orderBy: { creadaEn: "desc" } },
+        },
       })
       .then((filas) => filas.map(aReporte)),
   ]);
@@ -585,4 +997,3 @@ export async function fichaDeTienda(
 
   return { tienda, opinion, reportes };
 }
-

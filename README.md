@@ -13,6 +13,8 @@ incidencias, reseñas y cumplimiento desde un solo lugar.
 | `/configuracion`        | Alta y administración del catálogo de comercios                          | Interna |
 | `/tiendas/[tiendaId]`   | Ficha pública: código, horario, semáforo, reseñas y reportes            | Pública |
 | `/dashboard/quejas`     | Canal de quejas con folio, para compartir por WhatsApp                  | Pública |
+| `/comerciante`          | Expediente privado, semáforo e impugnaciones del titular                | Cuenta activada |
+| `/comerciante/activar`  | Activación por invitación de un solo uso                                 | Invitación |
 | `/verificar/[tiendaId]` | Redirección permanente a la ficha, para los QR ya impresos              | Pública |
 
 El QR de cada ficha se arma con el origen real del sitio, así que el mismo
@@ -72,21 +74,42 @@ de la lógica:
 - **`data/sitio.ts`** — titulares, textos de la portada, metadatos SEO y origen
   público del sitio.
 
-El puntaje de cumplimiento no se escribe en ningún lado: se deriva de los
-reportes.
+El puntaje no se escribe por separado: se deriva de reportes que Administración
+haya validado. Un reporte en trámite o una impugnación pendiente no resta puntos.
 
 ```
-puntaje = 100 − 20 × (reportes activos en los últimos 30 días)
+puntaje = max(0, 100 − Σ(puntos de infracciones validadas en los últimos 30 días))
 ```
 
-| Rango  | Estado       | Color      |
-| ------ | ------------ | ---------- |
-| 80–100 | En rango     | Verde      |
-| 40–79  | En observación | Mostaza  |
-| 0–39   | En revisión  | Terracota  |
+| Gravedad | Deducción | Consecuencia primaria |
+| -------- | --------- | ---------------------- |
+| Leve | 10 puntos (5 si se subsana dentro del plazo) | Notificación preventiva y cinco días hábiles para subsanar |
+| Grave | 20 puntos | Amonestación escrita |
+| Muy grave | 40 puntos | Evaluación prioritaria y audiencia de Junta en cinco días hábiles |
 
-Los registros comienzan vacíos. El puntaje se calcula a medida que se reciben
-incidencias para cada comercio.
+Cada validación mantiene puntos por 30 días calendario. Los estados son Verde
+(80–100), Amarillo (40–79) y Rojo (0–39). La reincidencia se mide en seis meses
+y únicamente dentro de la misma categoría de conducta. Las amonestaciones y
+sanciones formales se exponen durante seis meses.
+
+Los titulares entran a `/comerciante`. Administración genera una invitación
+de un solo uso desde Configuración; el enlace vence a los siete días. El titular
+activa la cuenta con una contraseña de al menos 12 caracteres y accede con el
+código EPS de su comercio. Administración puede emitir otra invitación para
+restablecer el acceso; al activarla se invalida la contraseña anterior. Las
+contraseñas se almacenan derivadas con scrypt y
+las sesiones usan cookies `HttpOnly`, `SameSite=Lax` firmadas con
+`ADMIN_SESSION_SECRET`. Las impugnaciones tienen acuse inmediato, suspenden
+puntaje y sanciones formales hasta que una persona imparcial las resuelva dentro
+de diez días hábiles. Mientras se resuelve una impugnación, Administración
+puede registrar una medida preventiva temporal únicamente si confirma un
+peligro para la salud o la seguridad, justifica la medida y fija su vencimiento.
+Los plazos del portal cuentan todos los días excepto los domingos.
+
+Solo Administración puede validar reportes y registrar sanciones. Las
+suspensiones y revocaciones se bloquean en servidor si el expediente no cumple
+sus condiciones de procedencia o si no consta audiencia previa y resolución
+motivada.
 
 ## Decisiones técnicas
 
@@ -175,21 +198,20 @@ real. Ese valor alimenta los metadatos, `sitemap.xml` y `robots.txt`; el QR y
 los enlaces de compartición usan el origen en tiempo de ejecución, así que se
 ajustan solos.
 
-> **Pendiente: no hay autenticación.** Cualquiera con la URL puede abrir la
-> gestión individual, Configuración, dar de alta y borrar comercios, publicar
-> reseñas y resolver denuncias. Antes de publicar en abierto, protege
-> `/dashboard/[tiendaId]`, `/configuracion` y las rutas de escritura con login.
-> El directorio y las fichas públicas de `/tiendas` deben seguir disponibles
-> para los residentes y los códigos QR.
+> **Alcance de autenticación:** el portal del comerciante protege la consulta
+> del expediente e impugnaciones. El inicio de sesión de Administración protege
+> Configuración y las decisiones de cumplimiento. Otras funciones públicas
+> existentes (p. ej., publicar reseñas y registrar reportes) mantienen su
+> acceso público; no las confundas con un reporte validado o una resolución de
+> Junta.
 
 ## Reseñas
 
 La valoración va de una a cinco estrellas y es pública de inmediato, sin
-moderación. Una reseña de **una sola estrella es una denuncia**: al guardarla
-además se abre un reporte con folio, y ese reporte es lo que descuenta veinte
-puntos del cumplimiento. De dos a cinco estrellas son opinión y no mueven el
-puntaje. Así una reseña mala nunca queda en el aire: siempre tiene folio para
-que la Junta la resuelva.
+moderación. Una reseña de **una sola estrella abre un reporte** con folio. No
+descuenta puntos automáticamente: el reporte se debe verificar y validar bajo
+una categoría y gravedad del reglamento antes de afectar el semáforo. De dos a
+cinco estrellas son opinión y no mueven el puntaje.
 
 ## Estructura
 

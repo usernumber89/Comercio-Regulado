@@ -44,9 +44,10 @@ export function VistaQuejas({ folio }: { folio: number | null }) {
         Reportar un incidente
       </h1>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--tinta-suave)] sm:text-base">
-        Registra ruido, basura o estacionamiento en el pasaje. Cada reporte
-        recibe un folio verificable y la Junta lo revisa sin depender de un
-        reclamo verbal en la asamblea.
+        Cualquier visitante puede reportar un incidente sin crear una cuenta
+        ni registrar un comercio. Selecciona un comercio del directorio y
+        describe lo ocurrido; cada reporte recibe un folio verificable para
+        que la Junta pueda revisarlo.
       </p>
 
       {referenciado ? (
@@ -86,13 +87,14 @@ export function VistaQuejas({ folio }: { folio: number | null }) {
       ) : catalogo.length === 0 && !cargando ? (
         <div className="mt-6 rounded-lg border border-dashed border-[var(--borde-fuerte)] px-5 py-8 text-center">
           <p className="text-sm font-medium text-[var(--tinta)]">
-            Primero registra un comercio.
+            Todavía no hay comercios en el directorio.
           </p>
           <p className="mt-2 text-sm text-[var(--tinta-suave)]">
-            El canal de incidencias estará disponible después del primer registro.
+            Para enviar un reporte, selecciona un comercio del directorio. No
+            necesitas crear una cuenta ni registrar el comercio.
           </p>
-          <Button asChild className="mt-4">
-            <Link href="/configuracion">Registrar un comercio</Link>
+          <Button asChild variant="contorno" className="mt-4">
+            <Link href="/tiendas">Ver el directorio</Link>
           </Button>
         </div>
       ) : (

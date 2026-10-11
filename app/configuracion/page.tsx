@@ -26,7 +26,7 @@ export default async function PaginaConfiguracion() {
       <SiteHeader seccion="configuracion" />
       <main id="contenido" className="flex-1 bg-[var(--papel)]">
         <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
-          <header className="filete-bosque border-t-2 border-t-[var(--bosque)] pt-5">
+          <header className=" pt-5">
             <p className="font-mono text-xs text-[var(--tinta-tenue)]">
               Comercio Regulado · Administración
             </p>

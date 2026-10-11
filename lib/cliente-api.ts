@@ -1,9 +1,12 @@
 import type { BorradorTienda } from "@/lib/tienda-formulario";
 import type {
   EstadoSistema,
+  CategoriaConducta,
+  GravedadInfraccion,
   Reporte,
   Resena,
   TipoIncidente,
+  TipoSancion,
   TipoSeguimientoReporte,
   Tienda,
 } from "@/types";
@@ -83,6 +86,76 @@ export async function alternarEstadoReporte(id: string): Promise<Reporte> {
   return reporte;
 }
 
+async function modificarReporte(
+  id: string,
+  path: string,
+  method: "PATCH" | "POST",
+  body?: object,
+): Promise<Reporte> {
+  const { reporte } = await pedir<{ reporte: Reporte }>(
+    `/api/reportes/${encodeURIComponent(id)}/${path}`,
+    {
+      method,
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    },
+  );
+  return reporte;
+}
+
+export function validarReporte(
+  id: string,
+  datos: {
+    categoria?: CategoriaConducta;
+    gravedad?: GravedadInfraccion;
+    confirmadaClasificacion: boolean;
+  },
+): Promise<Reporte> {
+  return modificarReporte(id, "validacion", "PATCH", datos);
+}
+
+export function registrarSubsanacion(id: string): Promise<Reporte> {
+  return modificarReporte(id, "subsanacion", "PATCH");
+}
+
+export function impugnarReporte(id: string, motivo: string): Promise<Reporte> {
+  return modificarReporte(id, "impugnacion", "POST", { motivo });
+}
+
+export function resolverImpugnacionReporte(
+  id: string,
+  datos: {
+    confirmar: boolean;
+    revisor: string;
+    rol: "administrador" | "comision_arbitro";
+    declaracionImparcialidad: boolean;
+    resolucion: string;
+  },
+): Promise<Reporte> {
+  return modificarReporte(id, "revision-impugnacion", "PATCH", datos);
+}
+
+export function registrarSancionReporte(
+  id: string,
+  datos: {
+    tipo: TipoSancion;
+    motivo: string;
+    resolucion: string;
+    audienciaEn: string;
+    diasSuspension: number | null;
+  },
+): Promise<Reporte> {
+  return modificarReporte(id, "sanciones", "POST", datos);
+}
+
+export async function crearInvitacionComerciante(
+  tiendaId: string,
+): Promise<{ codigo: string; expiraEn: string }> {
+  return pedir<{ codigo: string; expiraEn: string }>(
+    `/api/admin/comerciantes/${encodeURIComponent(tiendaId)}/invitacion`,
+    { method: "POST" },
+  );
+}
+
 export async function registrarSeguimientoReporte(
   id: string,
   datos: {
@@ -91,6 +164,8 @@ export async function registrarSeguimientoReporte(
     responsable: string;
     fechaLimite?: string;
     evidenciaUrl?: string;
+    peligroSaludSeguridad?: boolean;
+    vigenteHasta?: string;
   },
 ): Promise<Reporte> {
   const { reporte } = await pedir<{ reporte: Reporte }>(
